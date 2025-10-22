@@ -250,29 +250,119 @@ app = dash.Dash(
 # HELPER FUNCTIONS
 # ============================================================================
 
-# Small fallback airport lat/lon mapping for common US airports (IATA -> (lat, lon)).
-# This is used when `airport_df` lacks coordinate columns.
+# Comprehensive fallback airport lat/lon mapping for US airports (IATA -> (lat, lon)).
+# This is used when the CSV file is not available or lacks coordinate columns.
 FALLBACK_AIRPORT_COORDS = {
-    'ATL': (33.6407, -84.4277),
-    'LAX': (33.9416, -118.4085),
-    'ORD': (41.9742, -87.9073),
-    'DFW': (32.8998, -97.0403),
-    'DEN': (39.8561, -104.6737),
-    'JFK': (40.6413, -73.7781),
-    'SFO': (37.6213, -122.3790),
-    'SEA': (47.4502, -122.3088),
-    'LAS': (36.0840, -115.1537),
-    'MCO': (28.4312, -81.3081),
-    'CLT': (35.2144, -80.9473),
-    'PHX': (33.4342, -112.0116),
-    'IAH': (29.9902, -95.3368),
-    'MIA': (25.7959, -80.2870),
-    'BOS': (42.3656, -71.0096),
-    'MSP': (44.8848, -93.2223),
-    'DTW': (42.2162, -83.3554),
-    'PHL': (39.8744, -75.2424),
-    'BWI': (39.1754, -76.6684),
-    'SLC': (40.7884, -111.9778)
+    'ABE': (40.6521, -75.4408), 'ABI': (32.4113, -99.6819), 'ABQ': (35.0402, -106.6091),
+    'ABR': (45.4491, -98.4218), 'ABY': (31.5355, -84.1947), 'ACK': (41.2530, -70.0602),
+    'ACT': (31.6113, -97.2305), 'ACV': (40.9781, -124.1086), 'ACY': (39.4576, -74.5772),
+    'AEX': (31.3274, -92.5486), 'AGS': (33.3699, -81.9645), 'ALB': (42.7483, -73.8017),
+    'ALO': (42.5571, -92.4003), 'ALW': (46.1768, -118.2887), 'AMA': (35.2194, -101.7059),
+    'ANC': (61.1743, -149.9962), 'APN': (45.0781, -83.5603), 'ASE': (39.2232, -106.8687),
+    'ATL': (33.6407, -84.4277), 'ATW': (44.2581, -88.5191), 'AUS': (30.1945, -97.6699),
+    'AVL': (35.4362, -82.5418), 'AVP': (41.3375, -75.7242), 'AZA': (33.3078, -111.6553),
+    'AZO': (42.2349, -85.5521), 'BDL': (41.9389, -72.6832), 'BFF': (41.8740, -103.5966),
+    'BFL': (35.4336, -119.0568), 'BGM': (42.2084, -75.9798), 'BGR': (44.8074, -68.8281),
+    'BHM': (33.5629, -86.7535), 'BIH': (37.9308, -91.7656), 'BIL': (45.8077, -108.5430),
+    'BIS': (46.7727, -100.7462), 'BJI': (64.8436, -147.6136), 'BLI': (48.7947, -122.5375),
+    'BLV': (38.5452, -89.8352), 'BMI': (40.4771, -88.9159), 'BNA': (36.1245, -86.6782),
+    'BOI': (43.5644, -116.2228), 'BOS': (42.3656, -71.0096), 'BPT': (29.9508, -94.0205),
+    'BQK': (25.2528, -80.1067), 'BQN': (18.4948, -67.1294), 'BRD': (45.2078, -69.7842),
+    'BRO': (25.9068, -97.4259), 'BTM': (45.9548, -112.4970), 'BTR': (30.5332, -91.1496),
+    'BTV': (44.4719, -73.1533), 'BUF': (42.9405, -78.7322), 'BUR': (34.2007, -118.3585),
+    'BWI': (39.1754, -76.6684), 'BZN': (45.7769, -111.1530), 'CAE': (33.9388, -81.1195),
+    'CAK': (40.9161, -81.4422), 'CDC': (37.7005, -113.0984), 'CHA': (35.0353, -85.2034),
+    'CHO': (38.1386, -78.4529), 'CHS': (32.8986, -80.0405), 'CID': (41.8847, -91.7108),
+    'CIU': (46.9108, -68.0178), 'CLD': (32.9005, -117.2800), 'CLE': (41.4117, -81.8498),
+    'CLL': (30.5886, -96.3631), 'CLT': (35.2144, -80.9473), 'CMH': (39.9980, -82.8919),
+    'CMI': (40.0392, -88.2781), 'CMX': (47.1684, -88.4891), 'COD': (44.5202, -109.0238),
+    'COS': (38.8058, -104.7006), 'COU': (38.8181, -92.2196), 'CPR': (42.9080, -106.4644),
+    'CRP': (27.7704, -97.5012), 'CRW': (38.3731, -81.5932), 'CSG': (32.5163, -84.9389),
+    'CVG': (39.0488, -84.6678), 'CWA': (44.7776, -89.6674), 'CYS': (41.1557, -104.8119),
+    'DAB': (29.1799, -81.0581), 'DAL': (32.8471, -96.8518), 'DAY': (39.9024, -84.2194),
+    'DCA': (38.8512, -77.0402), 'DDC': (37.7634, -99.9656), 'DEC': (39.8346, -88.8657),
+    'DEN': (39.8561, -104.6737), 'DFW': (32.8998, -97.0403), 'DHN': (31.3213, -85.4496),
+    'DIK': (46.7979, -102.8019), 'DLH': (46.8421, -92.1936), 'DRO': (37.1515, -107.7538),
+    'DSM': (41.5340, -93.6631), 'DTW': (42.2162, -83.3554), 'DVL': (46.8427, -96.8156),
+    'EAR': (40.7273, -99.0068), 'EAU': (44.8658, -91.4843), 'ECP': (30.3581, -85.7948),
+    'EGE': (39.6426, -106.9177), 'EKO': (38.8042, -79.8573), 'ELM': (42.1599, -76.8916),
+    'ELP': (31.8072, -106.3781), 'ESC': (45.7227, -87.0937), 'EUG': (44.1246, -123.2114),
+    'EVV': (38.0370, -87.5324), 'EWN': (35.0730, -77.0429), 'EWR': (40.6895, -74.1745),
+    'EYW': (24.5561, -81.7596), 'FAI': (64.8151, -147.8560), 'FAR': (46.9207, -96.8158),
+    'FAT': (36.7762, -119.7181), 'FAY': (34.9912, -78.8803), 'FCA': (48.3105, -114.2551),
+    'FLG': (35.1345, -111.6703), 'FLL': (26.0742, -80.1506), 'FMN': (36.7412, -108.2298),
+    'FNT': (42.9655, -83.7436), 'FOD': (42.5511, -94.1925), 'FSD': (43.5820, -96.7419),
+    'FSM': (35.3362, -94.3675), 'FWA': (40.9785, -85.1951), 'GCC': (43.8742, -103.0574),
+    'GCK': (37.9276, -100.7244), 'GEG': (47.6198, -117.5336), 'GFK': (47.9493, -97.1761),
+    'GGG': (32.3840, -94.7116), 'GJT': (39.1224, -108.5267), 'GNV': (29.6900, -82.2718),
+    'GPT': (30.4073, -89.0701), 'GRB': (44.4851, -88.1296), 'GRI': (40.9675, -98.3096),
+    'GRK': (31.0672, -97.8289), 'GRR': (42.8808, -85.5228), 'GSO': (36.0978, -79.9373),
+    'GSP': (34.8957, -82.2189), 'GTF': (47.4820, -111.3705), 'GTR': (33.4503, -88.5914),
+    'GUC': (38.5339, -106.9331), 'GUF': (39.3704, -81.4395), 'GUM': (13.4834, 144.7960),
+    'HDN': (40.4811, -107.2176), 'HHH': (35.2584, -80.9536), 'HIB': (47.3866, -92.8389),
+    'HLN': (46.6068, -111.9825), 'HNL': (21.3099, -157.8581), 'HOB': (32.6875, -103.2173),
+    'HOU': (29.6454, -95.2789), 'HPN': (41.0670, -73.7076), 'HRL': (26.2285, -97.6544),
+    'HSV': (34.6371, -86.7750), 'HTS': (38.3667, -82.5581), 'HYA': (41.6693, -70.2803),
+    'HYS': (38.8422, -99.2732), 'IAD': (38.9531, -77.4565), 'IAH': (29.9902, -95.3368),
+    'ICT': (37.6499, -97.4331), 'IDA': (43.5146, -112.0707), 'ILM': (34.2706, -77.9026),
+    'IMT': (45.8181, -88.1145), 'IND': (39.7173, -86.2944), 'INL': (48.5664, -93.4031),
+    'ISP': (40.7952, -73.1002), 'ITH': (42.4831, -76.4584), 'ITO': (19.7188, -155.0478),
+    'JAC': (43.6073, -110.7377), 'JAN': (32.3112, -90.0759), 'JAX': (30.4941, -81.6878),
+    'JFK': (40.6413, -73.7781), 'JLN': (38.7424, -94.8907), 'JMS': (46.9297, -98.6782),
+    'JNU': (58.3548, -134.5763), 'JST': (40.3161, -78.8339), 'KOA': (19.7388, -156.0456),
+    'KTN': (55.3556, -131.7136), 'LAN': (42.7787, -84.5874), 'LAR': (41.3121, -105.6750),
+    'LAS': (36.0840, -115.1537), 'LAW': (34.5677, -98.4166), 'LAX': (33.9416, -118.4085),
+    'LBB': (33.6636, -101.8228), 'LBE': (40.2759, -79.4048), 'LBF': (41.1313, -100.6846),
+    'LBL': (37.0441, -89.8786), 'LCH': (30.1261, -93.2234), 'LCK': (39.8138, -82.9278),
+    'LEX': (38.0365, -84.6059), 'LFT': (30.2053, -91.9876), 'LGA': (40.7769, -73.8740),
+    'LGB': (33.8177, -118.1516), 'LIH': (21.9760, -159.3390), 'LIT': (34.7294, -92.2243),
+    'LNK': (40.8510, -96.7581), 'LRD': (27.5438, -99.4616), 'LSE': (43.8759, -91.2563),
+    'LWS': (46.3745, -117.0154), 'MAF': (31.9425, -102.2019), 'MBS': (43.5329, -84.0796),
+    'MCI': (39.2976, -94.7139), 'MCO': (28.4312, -81.3081), 'MCW': (41.4307, -100.5917),
+    'MDT': (40.1935, -76.7634), 'MDW': (41.7868, -87.7522), 'MEI': (32.3326, -88.7519),
+    'MEM': (35.0424, -89.9767), 'MFE': (26.1758, -98.2386), 'MFR': (42.3742, -122.8738),
+    'MGM': (32.3006, -86.3940), 'MGW': (39.6429, -79.9163), 'MHK': (39.1409, -96.6708),
+    'MHT': (42.9326, -71.4357), 'MIA': (25.7959, -80.2870), 'MKE': (42.9472, -87.8966),
+    'MLB': (28.1028, -80.6453), 'MLI': (41.4486, -90.5075), 'MLU': (32.5109, -92.0377),
+    'MOB': (30.6912, -88.2431), 'MOT': (48.2593, -101.2803), 'MQT': (46.3536, -87.3951),
+    'MRY': (36.5870, -121.8429), 'MSN': (43.1399, -89.3375), 'MSO': (46.9163, -114.0909),
+    'MSP': (44.8848, -93.2223), 'MSY': (29.9934, -90.2581), 'MTJ': (37.2276, -108.5259),
+    'MVY': (41.3931, -70.6143), 'MYR': (33.6797, -78.9283), 'OAJ': (36.9681, -76.2012),
+    'OAK': (37.7214, -122.2208), 'OGG': (20.8986, -156.4307), 'OKC': (35.3931, -97.6007),
+    'OMA': (41.3032, -95.8941), 'ONT': (34.0560, -117.6012), 'ORD': (41.9742, -87.9073),
+    'ORF': (36.8946, -76.2012), 'ORH': (42.2673, -71.8757), 'OTH': (43.4172, -124.2461),
+    'PAE': (47.9063, -122.2815), 'PBG': (44.6510, -73.4681), 'PBI': (26.6832, -80.0956),
+    'PDX': (45.5898, -122.5951), 'PGD': (26.9202, -81.9905), 'PHL': (39.8744, -75.2424),
+    'PHX': (33.4342, -112.0116), 'PIA': (40.6642, -89.6933), 'PIB': (39.2681, -79.9331),
+    'PIE': (27.9103, -82.6874), 'PIH': (42.9098, -112.5958), 'PIT': (40.4915, -80.2329),
+    'PLN': (44.6850, -85.5783), 'PNS': (30.4734, -87.1866), 'PPG': (-14.3310, -170.7105),
+    'PQI': (46.6890, -68.0448), 'PRC': (34.6544, -112.4196), 'PSC': (46.2647, -119.1191),
+    'PSE': (18.0083, -66.5635), 'PSP': (33.8297, -116.5066), 'PVD': (41.7240, -71.4281),
+    'PVU': (40.2192, -111.7235), 'PWM': (43.6462, -70.3093), 'RAP': (44.0453, -103.0574),
+    'RDD': (40.5089, -122.2934), 'RDM': (44.2541, -121.1500), 'RDU': (35.8776, -78.7875),
+    'RFD': (42.1954, -89.0972), 'RHI': (45.6312, -89.4675), 'RIC': (37.5052, -77.3197),
+    'RIW': (43.0642, -108.4597), 'RKS': (41.5942, -109.0651), 'RNO': (39.4991, -119.7681),
+    'ROA': (37.3255, -79.9754), 'ROC': (43.1189, -77.6724), 'ROW': (33.3017, -104.5307),
+    'RST': (43.9083, -92.4902), 'RSW': (26.5362, -81.7552), 'SAF': (35.6178, -106.0887),
+    'SAN': (32.7338, -117.1933), 'SAT': (29.5337, -98.4698), 'SAV': (32.1276, -81.2021),
+    'SBA': (34.4259, -119.8403), 'SBN': (41.7093, -86.3186), 'SBP': (35.2368, -120.6424),
+    'SCE': (40.8496, -78.2897), 'SCK': (37.8942, -121.2381), 'SDF': (38.1740, -85.7364),
+    'SEA': (47.4502, -122.3088), 'SFB': (28.7776, -81.2375), 'SFO': (37.6213, -122.3790),
+    'SGF': (37.2457, -93.3886), 'SGU': (37.0361, -113.5103), 'SHR': (44.7692, -106.9803),
+    'SHV': (32.4466, -93.8256), 'SIT': (57.0471, -135.3616), 'SJC': (37.3639, -121.9289),
+    'SJT': (31.3577, -100.4963), 'SJU': (18.4394, -66.0018), 'SLC': (40.7884, -111.9778),
+    'SLN': (38.8403, -97.6519), 'SMF': (38.6954, -121.5908), 'SMX': (34.8989, -120.4576),
+    'SNA': (33.6757, -117.8681), 'SPI': (39.8441, -89.6779), 'SPS': (33.9888, -98.4919),
+    'SRQ': (27.3954, -82.5544), 'STL': (38.7487, -90.3700), 'STS': (38.5089, -122.8131),
+    'STT': (18.3373, -64.9733), 'STX': (17.7019, -64.7986), 'SUN': (43.5041, -114.2958),
+    'SUX': (42.4026, -96.3844), 'SWF': (41.5041, -74.1048), 'SWO': (37.3684, -92.2226),
+    'SYR': (43.1112, -76.1063), 'TLH': (30.3965, -84.3503), 'TPA': (27.9755, -82.5332),
+    'TRI': (36.4752, -82.4074), 'TTN': (40.2766, -74.8148), 'TUL': (36.1984, -95.8881),
+    'TUS': (32.1161, -110.9410), 'TVC': (44.7414, -85.5822), 'TWF': (42.4818, -114.4877),
+    'TXK': (33.4537, -93.9910), 'TYR': (32.3540, -95.4024), 'TYS': (35.8111, -83.9937),
+    'USA': (31.1447, -87.4214), 'VCT': (28.8526, -96.9185), 'VLD': (30.7825, -83.2767),
+    'VPS': (30.4832, -86.5254), 'WYS': (37.2018, -109.7549), 'XNA': (36.2819, -94.3069),
+    'XWA': (47.2304, -120.2067), 'YUM': (32.6566, -114.6060)
 }
 
 def create_kpi_card(icon, title, value, subtitle, trend=None, color='accent'):
@@ -436,8 +526,8 @@ app.layout = html.Div([
         # === NEW: Network Analysis Container (only added container, no callbacks changed) ===
         html.Div([
             html.Div([
-                html.H3("Network Analysis", className="chart-title-premium"),
-                html.P("Hub count vs average delay impact", className="chart-subtitle-premium"),
+                html.H3("US Flight Network Map", className="chart-title-premium"),
+                html.P("Geographic visualization of routes with highest delay costs", className="chart-subtitle-premium"),
             ], className="chart-header-premium"),
             html.Div([
                 html.Div([
@@ -451,9 +541,9 @@ app.layout = html.Div([
                     ),
                 ], style={'display':'inline-block', 'width':'48%', 'verticalAlign':'middle'}),
                 html.Div([
-                    html.Label('Top N routes', style={'fontWeight':'600','marginRight':'12px'}),
-                    dcc.Slider(id='top-n-routes', min=5, max=50, step=5, value=20,
-                               marks={5:'5',10:'10',20:'20',30:'30',40:'40',50:'50'})
+                    html.Label('Routes to display', style={'fontWeight':'600','marginRight':'12px'}),
+                    dcc.Slider(id='top-n-routes', min=50, max=800, step=50, value=300,
+                               marks={50:'50',150:'150',300:'300',500:'500',800:'800'})
                 ], style={'display':'inline-block', 'width':'48%', 'paddingLeft':'16px', 'verticalAlign':'middle'})
             ], style={'marginBottom': '12px'}),
             dcc.Graph(
@@ -1035,9 +1125,7 @@ def _empty_figure(message: str = "No data available") -> go.Figure:
      Input('selected-carriers-store', 'children')]
 )
 def update_network_performance(top_n, carrier_filter, selected_carriers_json):
-    """Render Route Flow Map (geo arcs) using outputs/route_summary.csv and airport coordinates.
-    Falls back to a Sankey diagram if lat/lon are not available.
-    """
+    """Render US Geographic Network Map showing flight routes with delay costs"""
     route_path = Path('outputs/route_summary.csv')
     if not route_path.exists():
         return _empty_figure("Route summary CSV not found (outputs/route_summary.csv)")
@@ -1046,246 +1134,332 @@ def update_network_performance(top_n, carrier_filter, selected_carriers_json):
         route_df = pd.read_csv(route_path)
         if route_df.empty:
             return _empty_figure("Route summary CSV is empty")
+        
+        # Filter out very small routes to reduce clutter (minimum 25 flights)
+        route_df = route_df[route_df['num_flights'] >= 25].copy()
 
-        # Optional filters
+        # Apply carrier filters
         try:
             selected = json.loads(selected_carriers_json) if selected_carriers_json else None
         except Exception:
             selected = None
 
-        # apply UI carrier filters (route_carrier_filter takes precedence if provided)
         carriers_to_filter = carrier_filter if carrier_filter else selected
         if carriers_to_filter and 'primary_carrier' in route_df.columns:
             route_df = route_df[route_df['primary_carrier'].isin(carriers_to_filter)]
 
-        # Determine top N routes by total_delay_cost (or best available cost column)
-        value_col = 'total_delay_cost' if 'total_delay_cost' in route_df.columns else route_df.columns[route_df.columns.str.contains('cost', case=False)].tolist()[0]
-        top_n = int(top_n) if top_n is not None else 20
-        top_routes = route_df.nlargest(top_n, value_col).copy()
+        # Get routes with smart selection for geographic diversity
+        value_col = 'total_delay_cost' if 'total_delay_cost' in route_df.columns else 'avg_delay_cost'
+        top_n = int(top_n) if top_n is not None else 200
+        
+        # Strategy: Mix of high-impact routes, high-volume routes, and geographic diversity
+        # 1. Top routes by delay cost (40%)
+        # 2. Top routes by flight volume (40%) 
+        # 3. Random sample for geographic diversity (20%)
+        
+        cost_routes = route_df.nlargest(int(top_n * 0.4), value_col)
+        volume_routes = route_df.nlargest(int(top_n * 0.4), 'num_flights')
+        
+        # Get remaining routes for diversity sampling
+        used_routes = pd.concat([cost_routes, volume_routes])['route'].unique()
+        remaining_routes = route_df[~route_df['route'].isin(used_routes)]
+        diversity_routes = remaining_routes.sample(min(int(top_n * 0.2), len(remaining_routes)), random_state=42) if len(remaining_routes) > 0 else pd.DataFrame()
+        
+        # Combine all selections
+        all_selections = [cost_routes, volume_routes]
+        if not diversity_routes.empty:
+            all_selections.append(diversity_routes)
+            
+        combined_routes = pd.concat(all_selections).drop_duplicates(subset=['route'])
+        top_routes = combined_routes.head(top_n).copy()
 
-        # Try to discover lat/lon columns in airport_df
-        lat_cols = [c for c in airport_df.columns if c.lower() in ('lat','latitude','lat_deg','latitude_deg')]
-        lon_cols = [c for c in airport_df.columns if c.lower() in ('lon','longitude','lon_deg','longitude_deg')]
+        # Load airport coordinates
+        coords_df = None
+        coords_path = Path('data/airport_coords.csv')
+        if coords_path.exists():
+            coords_df = pd.read_csv(coords_path)
+        
+        # Parse route origins and destinations
+        def parse_route_codes(route_str):
+            if pd.isna(route_str):
+                return None, None
+            parts = str(route_str).split('-')
+            if len(parts) >= 2:
+                return parts[0].strip().upper(), parts[1].strip().upper()
+            return None, None
 
-        ap = None
-        ap_key = None
-        if lat_cols and lon_cols:
-            lat_col = lat_cols[0]
-            lon_col = lon_cols[0]
-            # Prepare airport lookup
-            ap = airport_df.rename(columns={lat_col: 'lat', lon_col: 'lon'})
-            ap_key = 'Airport' if 'Airport' in ap.columns else next((c for c in ap.columns if c.lower() in ('iata','airport','code')), ap.columns[0])
-            ap = ap[[ap_key, 'lat', 'lon']]
-        else:
-            # Try to load a small coords CSV shipped with the project
-            coords_path = Path('data/airport_coords.csv')
-            if coords_path.exists():
-                try:
-                    coords_df = pd.read_csv(coords_path)
-                    if 'iata' in coords_df.columns and 'lat' in coords_df.columns and 'lon' in coords_df.columns:
-                        ap = coords_df.rename(columns={'iata':'Airport', 'lat':'lat', 'lon':'lon'})
-                        ap_key = 'Airport'
-                        ap = ap[[ap_key, 'lat', 'lon']]
-                except Exception:
-                    ap = None
+        # Extract origin/dest from route column
+        route_parsed = top_routes['route'].apply(lambda x: pd.Series(parse_route_codes(x), index=['origin', 'dest']))
+        top_routes = pd.concat([top_routes.reset_index(drop=True), route_parsed], axis=1)
 
-        # Ensure we have origin/dest columns - be robust to different schemas
-        def ensure_origin_dest(df):
-            # common name variants
-            orig_candidates = ['origin','Origin','ORIGIN','orig','Orig','departure','from']
-            dest_candidates = ['dest','Dest','DEST','destination','to']
-            found_o = next((c for c in orig_candidates if c in df.columns), None)
-            found_d = next((c for c in dest_candidates if c in df.columns), None)
-            if found_o and found_d:
-                df = df.rename(columns={found_o: 'origin', found_d: 'dest'})
-                return df
-            # Try to parse from a 'route' column using separators or IATA regex
-            if 'route' in df.columns:
-                import re
-                def parse_route(rt):
-                    if pd.isna(rt):
-                        return (None, None)
-                    s = str(rt)
-                    # split on common separators
-                    parts = re.split(r'[-–/]| to |\\|–', s)
-                    parts = [p.strip() for p in parts if p.strip()]
-                    if len(parts) >= 2:
-                        return (parts[0], parts[1])
-                    # fallback: find two IATA codes
-                    m = re.findall(r'([A-Z]{3})', s)
-                    if len(m) >= 2:
-                        return (m[0], m[1])
-                    return (None, None)
+        # Get coordinates for each airport
+        def get_coordinates(airport_code):
+            if not airport_code:
+                return None, None
+            
+            # Try coordinates CSV first
+            if coords_df is not None:
+                match = coords_df[coords_df['iata'] == airport_code]
+                if not match.empty:
+                    return float(match.iloc[0]['lat']), float(match.iloc[0]['lon'])
+            
+            # Fallback to hardcoded coordinates
+            if airport_code in FALLBACK_AIRPORT_COORDS:
+                return FALLBACK_AIRPORT_COORDS[airport_code]
+            
+            return None, None
 
-                parsed = df['route'].apply(lambda r: pd.Series(parse_route(r), index=['origin','dest']))
-                df = pd.concat([df.reset_index(drop=True), parsed], axis=1)
-                return df
-            return df
+        # Add coordinates to routes
+        coords_data = []
+        for _, row in top_routes.iterrows():
+            origin_lat, origin_lon = get_coordinates(row['origin'])
+            dest_lat, dest_lon = get_coordinates(row['dest'])
+            
+            # Validate delay cost data
+            delay_cost = row[value_col]
+            if pd.isna(delay_cost) or delay_cost < 0:
+                delay_cost = 0
+            
+            if all(coord is not None for coord in [origin_lat, origin_lon, dest_lat, dest_lon]):
+                coords_data.append({
+                    'route': row['route'],
+                    'origin': row['origin'],
+                    'dest': row['dest'],
+                    'origin_lat': origin_lat,
+                    'origin_lon': origin_lon,
+                    'dest_lat': dest_lat,
+                    'dest_lon': dest_lon,
+                    'delay_cost': delay_cost,
+                    'num_flights': max(0, row.get('num_flights', 0)),
+                    'avg_delay_min': row.get('avg_delay_min', 0) if pd.notna(row.get('avg_delay_min', 0)) else 0,
+                    'delay_rate': row.get('delay_rate', 0) if pd.notna(row.get('delay_rate', 0)) else 0,
+                    'carrier': row.get('primary_carrier', 'Unknown')
+                })
 
-        top_routes = ensure_origin_dest(top_routes)
+        if not coords_data:
+            return _empty_figure("No coordinate data available for routes")
 
-        # Upper-case and strip codes
-        if 'origin' in top_routes.columns:
-            top_routes['origin_code'] = top_routes['origin'].astype(str).str.strip().str.upper()
-        else:
-            top_routes['origin_code'] = None
-        if 'dest' in top_routes.columns:
-            top_routes['dest_code'] = top_routes['dest'].astype(str).str.strip().str.upper()
-        else:
-            top_routes['dest_code'] = None
+        coords_df_final = pd.DataFrame(coords_data)
+        
+        # Debug: Check for any NaN values in the final dataset
+        nan_delay_costs = coords_df_final['delay_cost'].isna().sum()
+        if nan_delay_costs > 0:
+            print(f"Warning: {nan_delay_costs} routes have NaN delay costs")
+            # Fill NaN values with 0
+            coords_df_final['delay_cost'] = coords_df_final['delay_cost'].fillna(0)
+        
+        # Create the map figure
+        fig = go.Figure()
 
-        # Populate coordinates using airport_df lookup if available, otherwise FALLBACK_AIRPORT_COORDS
-        def lookup_coords(code):
-            if not code or code == 'None':
-                return (None, None)
-            # Try airport_df lookup
-            if ap is not None and ap_key in ap.columns:
-                row = ap[ap[ap_key].astype(str).str.upper() == str(code).upper()]
-                if not row.empty:
-                    return (float(row['lat'].values[0]), float(row['lon'].values[0]))
-            # Fallback mapping
-            if code in FALLBACK_AIRPORT_COORDS:
-                lat, lon = FALLBACK_AIRPORT_COORDS[code]
-                return (lat, lon)
-            return (None, None)
+        # Normalize values for visual scaling with NaN protection
+        max_cost = coords_df_final['delay_cost'].max()
+        min_cost = coords_df_final['delay_cost'].min()
+        max_flights = coords_df_final['num_flights'].max() if coords_df_final['num_flights'].max() > 0 else 1
 
-        # Apply lookup per row
-        origin_lats, origin_lons, dest_lats, dest_lons = [], [], [], []
-        for _, r in top_routes.iterrows():
-            o = r.get('origin_code')
-            d = r.get('dest_code')
-            olat, olon = lookup_coords(o)
-            dlat, dlon = lookup_coords(d)
-            origin_lats.append(olat); origin_lons.append(olon)
-            dest_lats.append(dlat); dest_lons.append(dlon)
+        # Ensure we have valid min/max values
+        if pd.isna(max_cost) or pd.isna(min_cost):
+            max_cost = 1
+            min_cost = 0
 
-        top_routes['origin_lat'] = origin_lats
-        top_routes['origin_lon'] = origin_lons
-        top_routes['dest_lat'] = dest_lats
-        top_routes['dest_lon'] = dest_lons
-        # If we have coordinates for both ends, render arcs
-        if 'origin_lat' in top_routes.columns and 'dest_lat' in top_routes.columns and top_routes[['origin_lat','dest_lat','origin_lon','dest_lon']].notna().all(axis=None):
-                fig = go.Figure()
-                # Normalize line widths
-                vmax = top_routes[value_col].max() if top_routes[value_col].max() > 0 else 1.0
-                for _, row in top_routes.iterrows():
-                    # stronger visual scaling for line width so differences are obvious
-                    width = max(1, (row[value_col] / vmax) * 30)
-                    fig.add_trace(go.Scattergeo(
-                        lon=[row['origin_lon'], row['dest_lon']],
-                        lat=[row['origin_lat'], row['dest_lat']],
-                        mode='lines',
-                        line=dict(width=width, color=COLORS['accent']),
-                        hoverinfo='text',
-                        text=f"{row.get('route', row.get('origin','') + ' - ' + row.get('dest',''))}<br>Total Delay Cost: ${row[value_col]:.0f}<br>Flights: {int(row.get('num_flights', 0))}"
-                    ))
-
-                # Add endpoints as scatter points (small)
-                endpoints = []
-                for _, r in top_routes.iterrows():
-                    endpoints.append((r['origin_lon'], r['origin_lat'], r.get('origin', '')))
-                    endpoints.append((r['dest_lon'], r['dest_lat'], r.get('dest', '')))
-                # dedupe
-                seen = set()
-                lons, lats, texts = [], [], []
-                for lon, lat, txt in endpoints:
-                    key = (lon, lat, txt)
-                    if key in seen:
-                        continue
-                    seen.add(key)
-                    lons.append(lon); lats.append(lat); texts.append(txt)
-
-                fig.add_trace(go.Scattergeo(lon=lons, lat=lats, mode='markers', marker=dict(size=6, color=COLORS['primary']), hoverinfo='text', text=texts))
-                fig.update_layout(
-                    title=f'Top {len(top_routes)} Routes (arcs sized by total delay cost)',
-                    geo=dict(scope='usa', projection_type='albers usa', showland=True, landcolor='rgb(230, 230, 230)', lakecolor='white'),
-                    showlegend=False,
-                    margin=dict(l=0, r=0, t=40, b=0)
-                )
-                return fig
-
-        # Fallback: create a Sankey flow (non-geographic) or bar chart if origin/dest missing
-        try:
-            if 'origin' in top_routes.columns and 'dest' in top_routes.columns and top_routes[['origin','dest']].notna().all(axis=None):
-                # Aggregate nodes: keep top N nodes by total flow and collapse others into 'Other'
-                nodes_raw = list(pd.unique(top_routes[['origin','dest']].values.ravel('K')))
-                # compute total flow per node
-                totals = {}
-                for _, r in top_routes.iterrows():
-                    totals[r['origin']] = totals.get(r['origin'], 0) + float(r[value_col])
-                    totals[r['dest']] = totals.get(r['dest'], 0) + float(r[value_col])
-
-                # choose top nodes to keep
-                max_nodes = 12
-                sorted_nodes = sorted(totals.items(), key=lambda x: x[1], reverse=True)
-                keep_nodes = [n for n, _ in sorted_nodes[:max_nodes]]
-                collapse_name = 'Other'
-
-                # Map origins/dests to kept nodes or 'Other'
-                mapped_sources = []
-                mapped_targets = []
-                raw_values = []
-                for _, r in top_routes.iterrows():
-                    o = r['origin'] if r['origin'] in keep_nodes else collapse_name
-                    d = r['dest'] if r['dest'] in keep_nodes else collapse_name
-                    mapped_sources.append(o)
-                    mapped_targets.append(d)
-                    raw_values.append(float(r[value_col]))
-
-                # Build node list (unique, keep order)
-                nodes = list(dict.fromkeys(keep_nodes + [collapse_name] if collapse_name in mapped_sources or collapse_name in mapped_targets else keep_nodes))
-                node_idx = {n: i for i, n in enumerate(nodes)}
-
-                sources = [node_idx[o] for o in mapped_sources]
-                targets = [node_idx[t] for t in mapped_targets]
-                values = raw_values
-
-                # Scale link values to enhance width differences for plotting
-                minv = min(values) if values else 0
-                maxv = max(values) if values else 0
-                if maxv > minv:
-                    scaled = [1 + int((v - minv) / (maxv - minv) * 99) for v in values]
-                else:
-                    scaled = [max(1, int(v)) for v in values]
-
-                # Node labels with totals for clarity
-                node_labels = []
-                for n in nodes:
-                    total = sum(v for i,v in enumerate(values) if mapped_sources[i]==n or mapped_targets[i]==n)
-                    node_labels.append(f"{n}\n${int(total):,}")
-
-                sankey = go.Figure(go.Sankey(
-                    node=dict(label=node_labels, pad=12, thickness=18),
-                    link=dict(source=sources, target=targets, value=scaled, color=[COLORS['accent'] if v < (minv+maxv)/2 else COLORS['danger'] for v in values], customdata=[f"${v:,.0f}" for v in values], hovertemplate='%{source.label} → %{target.label}<br>Total Delay Cost: %{customdata}<extra></extra>')
-                ))
-                sankey.update_layout(title=f'Top {len(top_routes)} Routes (Sankey, small nodes collapsed)', margin=dict(l=0, r=0, t=40, b=0))
-                return sankey
+        # Add flight routes as lines
+        for _, route in coords_df_final.iterrows():
+            # Calculate line properties with NaN protection
+            delay_cost = route['delay_cost']
+            if pd.isna(delay_cost):
+                delay_cost = 0
+                
+            cost_ratio = (delay_cost - min_cost) / (max_cost - min_cost) if max_cost > min_cost else 0
+            
+            # Ensure cost_ratio is valid
+            if pd.isna(cost_ratio) or cost_ratio < 0:
+                cost_ratio = 0
+            elif cost_ratio > 1:
+                cost_ratio = 1
+                
+            line_width = 2 + (cost_ratio * 8)  # 2-10px width range
+            
+            # Final safety check for line_width
+            if pd.isna(line_width) or line_width < 1:
+                line_width = 2
+            
+            # Color based on delay severity
+            if cost_ratio < 0.33:
+                line_color = COLORS['success']  # Green for low delay cost
+            elif cost_ratio < 0.66:
+                line_color = COLORS['warning']  # Orange for medium delay cost
             else:
-                # As a last-resort fallback, show a horizontal bar of top routes by label
-                label_col = 'route' if 'route' in top_routes.columns else None
-                labels = top_routes[label_col].astype(str) if label_col else (top_routes.get('origin', '').astype(str) + ' - ' + top_routes.get('dest', '').astype(str))
-                fig = go.Figure()
-                fig.add_trace(go.Bar(
-                    x=top_routes[value_col],
-                    y=labels,
-                    orientation='h',
-                    marker=dict(color=COLORS['danger']),
-                    hovertemplate='<b>%{y}</b><br>Total Delay Cost: $%{x:.0f}<extra></extra>'
-                ))
-                fig.update_layout(
-                    title='Top Routes by Total Delay Cost',
-                    xaxis=dict(title='Total Delay Cost ($)'),
-                    yaxis=dict(title='Route', autorange='reversed'),
-                    plot_bgcolor='rgba(0,0,0,0)',
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    font=dict(family='Inter, sans-serif', color=COLORS['text_secondary'])
-                )
-                return fig
-        except Exception as e:
-            return _empty_figure(f"Unable to render route flows: {str(e)}")
+                line_color = COLORS['danger']   # Red for high delay cost
+
+            # Create curved flight path (great circle approximation)
+            lons = [route['origin_lon'], route['dest_lon']]
+            lats = [route['origin_lat'], route['dest_lat']]
+            
+            # Add some curvature for visual appeal
+            mid_lon = (route['origin_lon'] + route['dest_lon']) / 2
+            mid_lat = (route['origin_lat'] + route['dest_lat']) / 2 + 2  # Slight northward curve
+            
+            # Create curved path with 3 points
+            curve_lons = [route['origin_lon'], mid_lon, route['dest_lon']]
+            curve_lats = [route['origin_lat'], mid_lat, route['dest_lat']]
+
+            fig.add_trace(go.Scattergeo(
+                lon=curve_lons,
+                lat=curve_lats,
+                mode='lines',
+                line=dict(
+                    width=line_width,
+                    color=line_color,
+                ),
+                opacity=0.7,
+                hoverinfo='text',
+                hovertext=f"""<b>{route['route']}</b><br>
+                Carrier: {route['carrier']}<br>
+                Total Delay Cost: ${route['delay_cost']:,.0f}<br>
+                Flights: {int(route['num_flights']):,}<br>
+                Avg Delay: {route['avg_delay_min']:.1f} min<br>
+                Delay Rate: {route['delay_rate']*100:.1f}%""",
+                showlegend=False,
+                name=''
+            ))
+
+        # Add airport nodes
+        airports = {}
+        for _, route in coords_df_final.iterrows():
+            # Collect origin airports
+            if route['origin'] not in airports:
+                airports[route['origin']] = {
+                    'lat': route['origin_lat'],
+                    'lon': route['origin_lon'],
+                    'total_cost': 0,
+                    'total_flights': 0,
+                    'routes': 0
+                }
+            airports[route['origin']]['total_cost'] += route['delay_cost']
+            airports[route['origin']]['total_flights'] += route['num_flights']
+            airports[route['origin']]['routes'] += 1
+            
+            # Collect destination airports
+            if route['dest'] not in airports:
+                airports[route['dest']] = {
+                    'lat': route['dest_lat'],
+                    'lon': route['dest_lon'],
+                    'total_cost': 0,
+                    'total_flights': 0,
+                    'routes': 0
+                }
+            airports[route['dest']]['total_cost'] += route['delay_cost']
+            airports[route['dest']]['total_flights'] += route['num_flights']
+            airports[route['dest']]['routes'] += 1
+
+        # Add airport markers
+        airport_lons = []
+        airport_lats = []
+        airport_sizes = []
+        airport_colors = []
+        airport_texts = []
+        airport_hovers = []
+
+        max_airport_cost = max(data['total_cost'] for data in airports.values()) if airports else 1
+        
+        # Ensure max_airport_cost is valid
+        if pd.isna(max_airport_cost) or max_airport_cost <= 0:
+            max_airport_cost = 1
+
+        for code, data in airports.items():
+            airport_lons.append(data['lon'])
+            airport_lats.append(data['lat'])
+            
+            # Size based on total cost impact with validation
+            total_cost = data['total_cost']
+            if pd.isna(total_cost) or total_cost < 0:
+                total_cost = 0
+                
+            size_ratio = total_cost / max_airport_cost if max_airport_cost > 0 else 0
+            
+            # Ensure size_ratio is valid
+            if pd.isna(size_ratio) or size_ratio < 0:
+                size_ratio = 0
+            elif size_ratio > 1:
+                size_ratio = 1
+                
+            size = 8 + (size_ratio * 20)  # 8-28px range
+            
+            # Final validation for size
+            if pd.isna(size) or size < 8:
+                size = 8
+                
+            airport_sizes.append(size)
+            
+            # Color based on hub size (number of routes)
+            if data['routes'] >= 5:
+                airport_colors.append(COLORS['primary'])  # Major hub
+            elif data['routes'] >= 3:
+                airport_colors.append(COLORS['accent'])   # Medium hub
+            else:
+                airport_colors.append(COLORS['text_secondary'])  # Small airport
+            
+            airport_texts.append(code)
+            airport_hovers.append(f"""<b>{code}</b><br>
+            Routes: {data['routes']}<br>
+            Total Delay Cost: ${data['total_cost']:,.0f}<br>
+            Total Flights: {data['total_flights']:,}""")
+
+        fig.add_trace(go.Scattergeo(
+            lon=airport_lons,
+            lat=airport_lats,
+            mode='markers+text',
+            marker=dict(
+                size=airport_sizes,
+                color=airport_colors,
+                line=dict(width=1, color='white'),
+                sizemode='diameter'
+            ),
+            text=airport_texts,
+            textposition='middle center',
+            textfont=dict(size=10, color='white', family='Inter, sans-serif'),
+            hoverinfo='text',
+            hovertext=airport_hovers,
+            showlegend=False,
+            name=''
+        ))
+
+        # Update layout for US map
+        fig.update_layout(
+            title=dict(
+                text=f'US Flight Network - Top {len(coords_df_final)} Routes by Delay Cost',
+                font=dict(size=16, family='Inter, sans-serif', color=COLORS['text_primary'])
+            ),
+            geo=dict(
+                scope='usa',
+                projection_type='albers usa',
+                showland=True,
+                landcolor='rgb(243, 243, 243)',
+                coastlinecolor='rgb(204, 204, 204)',
+                showlakes=True,
+                lakecolor='rgb(255, 255, 255)',
+                showsubunits=True,
+                subunitcolor='rgb(217, 217, 217)',
+                countrycolor='rgb(217, 217, 217)',
+                showframe=False,
+                bgcolor='rgba(0,0,0,0)'
+            ),
+            showlegend=False,
+            margin=dict(l=0, r=0, t=50, b=0),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(family='Inter, sans-serif', color=COLORS['text_secondary']),
+            hoverlabel=dict(
+                bgcolor="white",
+                font_size=12,
+                font_family="Inter, sans-serif",
+                bordercolor=COLORS['text_secondary']
+            )
+        )
+
+        return fig
 
     except Exception as e:
-        return _empty_figure(f"Error loading route summary: {str(e)}")
+        return _empty_figure(f"Error creating network map: {str(e)}")
             
 
 
