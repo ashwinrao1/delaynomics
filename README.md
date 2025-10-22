@@ -14,8 +14,8 @@ This project translates flight delay data into economic efficiency metrics to de
 
 ## Key Metrics
 
-- **delay_cost**: Economic cost of delays using FAA estimate ($74/minute)
-- **cost_per_mile**: Normalized efficiency metric (delay cost / distance)
+- **delay_cost**: Economic cost of delays (passenger-focused by default: $47.10/hour — see FAA source below). The project also exports an operator-focused cost measure where relevant.
+- **cost_per_mile**: Normalized efficiency metric (delay cost / distance, with optional sqrt-distance normalization to reduce short-haul bias)
 - **delay_rate**: Percentage of flights with delays > 15 minutes
 - **avg_delay_per_flight**: Mean arrival delay in minutes
 
@@ -99,8 +99,12 @@ Import the files from `outputs/`:
 - Subset to top 5 carriers and top 10 airports
 
 ### Step 2: Feature Engineering
-- **delay_cost** = ArrDelay × $74 (FAA cost per minute)
-- **cost_per_mile** = delay_cost / Distance
+
+This project computes both passenger- and operator-focused delay costs so you can pick the view that matches your audience.
+
+- **delay_cost (passenger VOT)** = ArrDelay × $47.10 (FAA passenger Value-of-Time, default — see citation below)
+- **delay_cost (operator / FAA system)** = ArrDelay × operator_cost_per_minute (configurable; historically higher values have been used for system/operator impact)
+- **cost_per_mile** = delay_cost / Distance (the notebook applies a sqrt-distance normalization by default to avoid over-penalizing short-haul flights; you can change this)
 - **is_delayed** = 1 if ArrDelay > 15 minutes
 
 ### Step 3: Aggregation
@@ -208,11 +212,19 @@ After running the analysis, you'll be able to answer:
 - Update frequency: Monthly
 - Coverage: All domestic US flights
 
-## FAA Cost Estimates
+## FAA Cost Estimates (Value-of-Time)
 
-The analysis uses the FAA's estimated cost of flight delays:
-- **$74 per minute** of delay (passenger time value + operational costs)
-- Source: FAA Air Traffic Organization
+For customer-facing comparisons this project uses the FAA's published passenger Value-of-Time (VOT) estimate:
+
+- **$47.10 per minute** (FAA passenger VOT estimate)
+
+We also expose an operator/system-level cost metric if you want to view the analysis from the airline or infrastructure perspective. Historically some internal analyses reference higher per-minute operational costs (for example, $74/min), but that represents a different aggregation of airline and system impacts.
+
+Source / citation (FAA VOT):
+
+https://www.faa.gov/sites/faa.gov/files/regulations_policies/policy_guidance/benefit_cost/econ-value-section-1-tx-time.pdf
+
+The dashboard footer links to the FAA document so users can inspect the source directly. If you prefer a different VOT (leisure vs business travellers), change the parameter in the notebook where cost-per-minute is defined.
 
 ## License
 

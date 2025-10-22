@@ -106,6 +106,7 @@ def generate_ai_insights(airline_summary):
         return "**AI Insights Unavailable**\n\nSet the `GEMINI_API_KEY` in your `.env` file to enable AI-powered insights.\n\n**How to enable:**\n1. Get API key from: https://makersuite.google.com/app/apikey\n2. Add to `.env` file: `GEMINI_API_KEY=your-key-here`\n3. Restart the dashboard"
 
     try:
+        #gemini_model = 'gemini-2.0-flash'
         # Prepare data summary - format numbers nicely to avoid recitation issues
         top_5_df = airline_summary.nsmallest(5, 'avg_cost_per_mile')[['Carrier', 'avg_cost_per_mile', 'avg_delay_min', 'delay_rate']].copy()
         top_5_df['avg_cost_per_mile'] = top_5_df['avg_cost_per_mile'].round(2)
@@ -227,7 +228,6 @@ AIRLINE_NAMES = {
     'WN': 'Southwest Airlines',
     'OO': 'SkyWest Airlines',
     'YX': 'Republic Airways',
-    'MQ': 'Envoy Air',
     '9E': 'Endeavor Air',
     'YV': 'Mesa Airlines'
 }
@@ -449,7 +449,7 @@ app.layout = html.Div([
                 html.Span("Bureau of Transportation Statistics"),
                 html.Span(" | ", style={'margin': '0 10px'}),
                 html.Span("Cost Model: ", style={'fontWeight': '600'}),
-                html.Span("$74/minute (FAA estimate)"),
+                html.A("$47.10/hour (FAA VOT)", href="https://www.faa.gov/sites/faa.gov/files/regulations_policies/policy_guidance/benefit_cost/econ-value-section-1-tx-time.pdf", target="_blank", style={'color': COLORS['accent'], 'textDecoration': 'none', 'fontWeight': '600'}),
                 html.Span(" | ", style={'margin': '0 10px'}),
                 html.Span("Analysis: ", style={'fontWeight': '600'}),
                 html.Span(f"{airline_df['num_flights'].sum():,} flights"),
@@ -538,7 +538,7 @@ def handle_chat_question(n_clicks, question):
             dow_context = f"\n\nDAY OF WEEK STATISTICS:\n{dow_stats[['day_name', 'ArrDelay', 'delay_cost', 'is_delayed']].to_string(index=False)}"
 
         prompt = f"""
-        You are a flight delay data analyst. Answer this question based ONLY on the data provided below.
+        You are a flight delay data analyst. Answer this question based mostly on the data provided below, and any similar context.
 
         USER QUESTION: {question}
 
@@ -674,13 +674,38 @@ def update_airline_charts(selected_carriers_json):
     fig_scatter.add_vline(x=median_rate, line_dash="dot", line_color="rgba(0,0,0,0.2)",
                            annotation_text="", annotation_position="top")
 
+    # Add regression line
+    from scipy import stats
+    slope, intercept, r_value, p_value, std_err = stats.linregress(
+        filtered_df['delay_rate'],
+        filtered_df['avg_cost_per_mile']
+    )
+    line_x = np.array([filtered_df['delay_rate'].min(), filtered_df['delay_rate'].max()])
+    line_y = slope * line_x + intercept
+    
+    # Add regression line as a trace
+    fig_scatter.add_trace(go.Scatter(
+        x=line_x,
+        y=line_y,
+        mode='lines',
+        name=f'Regression (R² = {r_value**2:.2f})',
+        line=dict(color='rgba(100,100,100,0.5)', dash='dot'),
+    
+        
+        hovertemplate='R² = {r_value**2:.2f}<extra></extra>'
+    ))
+
     # Add scatter points
     fig_scatter.add_trace(go.Scatter(
         x=filtered_df['delay_rate'],
         y=filtered_df['avg_cost_per_mile'],
         mode='markers+text',
         marker=dict(
-            size=filtered_df['num_flights'] / 100,
+            # Scale down the size more aggressively and add limits
+            size=filtered_df['num_flights'] / 1000,  # Reduced from /100 to /1000
+            sizemin=10,  # Minimum size
+            sizemode='area',  # Use area for more intuitive scaling
+            sizeref=2. * filtered_df['num_flights'].max() / (1000**2),  # Normalize the size range
             color=filtered_df['avg_delay_min'],
             colorscale='Reds',
             showscale=True,
@@ -696,6 +721,13 @@ def update_airline_charts(selected_carriers_json):
     fig_scatter.update_layout(
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
+        legend=dict(
+            x=-0.02,  # Position at 2% from left
+            y=-0.02,  # Position at 2% from bottom
+            xanchor='left',
+            yanchor='bottom',
+            bgcolor='rgba(255,255,255,0.8)'  # Semi-transparent white background
+        ),
         font=dict(family='Inter, sans-serif', color=COLORS['text_secondary'], size=11),
         xaxis=dict(
             title='Delay Rate',
