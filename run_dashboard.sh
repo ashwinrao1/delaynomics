@@ -31,4 +31,4 @@ fi
 # Launch dashboard
 echo "🚀 Launching dashboard..."
 echo ""
-python3 dashboard_app.py
+python3 dashboard_app_enhanced.py
