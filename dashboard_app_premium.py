@@ -72,19 +72,28 @@ GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 gemini_model = None
 
 if GEMINI_API_KEY:
+    
+        
     try:
         genai.configure(api_key=GEMINI_API_KEY)
-        # Try gemini-2.5-flash first (faster, cheaper), fall back to other models
-        try:
-            gemini_model = genai.GenerativeModel('gemini-2.5-flash')
-            print("Gemini AI enabled (using gemini-2.5-flash)")
-        except:
+        
+        # Use correct model names
+        model_names = [
+            'gemini-2.0-flash-exp',  # Latest
+            'gemini-1.5-flash',      # Stable
+            'gemini-1.5-pro'         # Fallback
+        ]
+        
+        for model_name in model_names:
             try:
-                gemini_model = genai.GenerativeModel('models/gemini-2.5-pro')
-                print("Gemini AI enabled (using gemini-2.5-pro)")
-            except:
-                gemini_model = genai.GenerativeModel('models/gemini-flash-latest')
-                print("Gemini AI enabled (using gemini-flash-latest)")
+                gemini_model = genai.GenerativeModel(model_name)
+                print(f"✓ Gemini AI enabled (using {model_name})")
+                break
+            except Exception as e:
+                continue
+                
+        if not gemini_model:
+            raise Exception("No compatible model found")
     except Exception as e:
         print(f"WARNING: Gemini AI unavailable: {e}")
         gemini_model = None
