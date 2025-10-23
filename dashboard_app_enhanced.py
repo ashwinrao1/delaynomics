@@ -489,18 +489,7 @@ app.layout = html.Div([
             ),
         ], className="chart-card-premium-large"),
 
-        # === Seasonal Delay Patterns ===
-        html.Div([
-            html.Div([
-                html.H3("Seasonal Delay Patterns", className="chart-title-premium"),
-                html.P("Route delay trends across months of the year", className="chart-subtitle-premium"),
-            ], className="chart-header-premium"),
-            dcc.Graph(
-                id='seasonal-patterns-chart',
-                config={'displayModeBar': False, 'responsive': True},
-                style={'height': '100%', 'width': '100%'}
-            ),
-        ], className="chart-card-premium-large"),
+
 
         # Chart 5 - Day of Week Analysis (NEW)
         html.Div([
@@ -1342,14 +1331,7 @@ def update_hub_connectivity(selected_carriers_json, carrier_filter):
     """Hub Connectivity Network"""
     return create_hub_connectivity_network(selected_carriers_json, carrier_filter)
 
-@callback(
-    Output('seasonal-patterns-chart', 'figure'),
-    [Input('selected-carriers-store', 'children'),
-     Input('route-carrier-filter', 'value')]
-)
-def update_seasonal_patterns(selected_carriers_json, carrier_filter):
-    """Seasonal Delay Patterns"""
-    return create_seasonal_analysis(selected_carriers_json, carrier_filter)
+
 
 def create_route_performance_matrix(selected_carriers_json, carrier_filter):
     """Create a route performance matrix showing distance vs frequency vs delay cost"""
@@ -1564,114 +1546,7 @@ def create_hub_connectivity_network(selected_carriers_json, carrier_filter):
     except Exception as e:
         return _empty_figure(f"Error creating hub network: {str(e)}")
 
-def create_seasonal_analysis(selected_carriers_json, carrier_filter):
-    """Create seasonal delay pattern analysis"""
-    full_path = Path('outputs/full_dataset_for_tableau.csv')
-    if not full_path.exists():
-        return _empty_figure("Full dataset CSV not found")
-    
-    try:
-        # Better sampling strategy to ensure all 12 months are represented
-        # Read smaller chunks more frequently to get better month distribution
-        chunk_size = 300000
-        max_chunks = 20  # Read more chunks to ensure we get all months
-        
-        chunks = []
-        months_found = set()
-        chunk_count = 0
-        
-        for chunk in pd.read_csv(full_path, chunksize=chunk_size):
-            chunk_count += 1
-            chunk_months = set(chunk['Month'].unique())
-            months_found.update(chunk_months)
-            
-            # Sample from each chunk
-            chunk_sample = chunk.sample(n=min(25000, len(chunk)), random_state=42)
-            chunks.append(chunk_sample)
-            
-            # Continue until we have all 12 months or hit max chunks
-            if len(months_found) == 12 or chunk_count >= max_chunks:
-                break
-        
-        df = pd.concat(chunks, ignore_index=True)
-        
-        # Log what months we found for debugging
-        final_months = sorted(df['Month'].unique())
-        print(f"Seasonal analysis found months: {final_months}")
-        
-        # Apply carrier filters
-        try:
-            selected = json.loads(selected_carriers_json) if selected_carriers_json else None
-        except Exception:
-            selected = None
 
-        carriers_to_filter = carrier_filter if carrier_filter else selected
-        if carriers_to_filter and 'Carrier' in df.columns:
-            df = df[df['Carrier'].isin(carriers_to_filter)]
-        
-        # Create route column and date
-        if 'route' not in df.columns:
-            df['route'] = df['Origin'] + '-' + df['Dest']
-        
-        # Use existing month column if available, otherwise create from date
-        if 'Month' in df.columns:
-            df['month'] = df['Month']
-        else:
-            df['date'] = pd.to_datetime(df[['Year', 'Month', 'DayofMonth']].rename(columns={'DayofMonth': 'day'}))
-            df['month'] = df['date'].dt.month
-        
-        # Get top routes by volume
-        top_routes = df['route'].value_counts().head(15).index
-        df_filtered = df[df['route'].isin(top_routes)]
-        
-        if df_filtered.empty:
-            return _empty_figure("No route data available after filtering")
-        
-        # Aggregate by route and month
-        monthly_delays = df_filtered.groupby(['route', 'month'])['delay_cost'].mean().reset_index()
-        
-        if monthly_delays.empty:
-            return _empty_figure("No monthly delay data available")
-        
-        # Pivot for heatmap
-        heatmap_data = monthly_delays.pivot(index='route', columns='month', values='delay_cost')
-        
-        # Fill missing months with 0 and ensure we have proper month labels
-        month_names = {1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun',
-                      7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec'}
-        
-        # Reindex to include all months that exist in the dataset (fill missing with NaN)
-        available_months = sorted(df['month'].unique())
-        all_months = list(range(1, 13))  # Still show all 12 months for context
-        heatmap_data = heatmap_data.reindex(columns=all_months)
-        
-        # Create month labels
-        month_labels = [month_names.get(i, f'Month {i}') for i in heatmap_data.columns]
-        
-        fig = go.Figure(data=go.Heatmap(
-            z=heatmap_data.values,
-            x=month_labels,
-            y=heatmap_data.index,
-            colorscale='RdYlGn_r',
-            showscale=True,
-            colorbar=dict(title='Avg Delay<br>Cost ($)'),
-            hovertemplate='Route: %{y}<br>Month: %{x}<br>Avg Delay Cost: $%{z:.0f}<extra></extra>',
-            zmin=0  # Set minimum to 0 for better color scaling
-        ))
-        
-        fig.update_layout(
-            title='Seasonal Delay Patterns by Route',
-            xaxis_title='Month',
-            yaxis_title='Route',
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(family='Inter, sans-serif', color=COLORS['text_secondary'])
-        )
-        
-        return fig
-        
-    except Exception as e:
-        return _empty_figure(f"Error creating seasonal analysis: {str(e)}")
 
 
 

@@ -2,7 +2,7 @@
 
 **"Which Airlines Deliver the Best Value for Money?"**
 
-A data-driven analysis of flight delay costs and efficiency using Python and Tableau.
+An interactive data-driven analysis of flight delay costs and efficiency using Python, Dash, and advanced visualizations including a comprehensive US flight network map.
 
 ## Project Overview
 
@@ -24,7 +24,9 @@ This project translates flight delay data into economic efficiency metrics to de
 | Purpose | Tool |
 |---------|------|
 | Data loading, cleaning, and analysis | Python (pandas, numpy) |
-| Visualization | Tableau Desktop / Tableau Public |
+| Interactive Dashboard | Dash/Plotly |
+| Geographic Visualization | Plotly Scattergeo (US flight network map) |
+| AI-Powered Insights | Google Gemini API |
 | Statistical modeling | scikit-learn |
 | Notebook environment | Jupyter |
 
@@ -32,15 +34,17 @@ This project translates flight delay data into economic efficiency metrics to de
 
 ```
 Delaynomics/
-├── data/                           # Raw data files (not included)
-│   └── airline_ontime.csv         # BTS data (download separately)
+├── data/                           # Raw data files
+│   ├── airline_ontime.csv         # BTS data (download separately)
+│   └── airport_coords.csv         # Airport coordinates for mapping
 ├── notebooks/
 │   └── analysis.ipynb             # Main analysis notebook
-├── outputs/                        # Generated files for Tableau
+├── outputs/                        # Generated analysis files
 │   ├── airline_summary.csv        # Airline-level metrics
 │   ├── airport_summary.csv        # Airport-level metrics
-│   ├── full_dataset_for_tableau.csv
-│   └── regression_plot.png
+│   ├── route_summary.csv          # Route-level analysis
+│   └── full_dataset_for_tableau.csv # Complete dataset (5.4M flights)
+├── dashboard_app_enhanced.py       # Interactive Dash dashboard
 ├── requirements.txt               # Python dependencies
 └── README.md                      # This file
 ```
@@ -83,12 +87,18 @@ Run all cells in order. The notebook will:
 4. Perform regression analysis
 5. Export CSV files for Tableau
 
-### 4. Open in Tableau
+### 4. Launch Interactive Dashboard
 
-Import the files from `outputs/`:
-- `airline_summary.csv`
-- `airport_summary.csv`
-- `full_dataset_for_tableau.csv` (optional, for deeper analysis)
+```bash
+python dashboard_app_enhanced.py
+```
+
+Open your browser to `http://localhost:8050` to explore the interactive dashboard featuring:
+- **US Flight Network Map**: Geographic visualization of 300+ routes
+- **AI-Powered Insights**: Gemini-generated analysis and recommendations
+- **Route Performance Matrix**: Efficiency analysis by distance and frequency
+- **Hub Connectivity Analysis**: Airport network performance
+- **Interactive Filtering**: Real-time carrier and route filtering
 
 ## Analysis Pipeline
 
@@ -124,17 +134,29 @@ Interpretation:
 ### Step 5: Export for Visualization
 Generate summary CSV files for Tableau dashboard creation.
 
-## Tableau Dashboard Design
+## Interactive Dashboard Features
 
-### Recommended Visualizations
+### Main Visualizations
 
-| Section | Visualization | Description |
-|---------|---------------|-------------|
-| **Top Panel** | Bar Chart - Avg delay cost per airline | "Who delivers best value for money?" |
-| **Center Panel** | Heatmap - Airport vs Avg Delay Cost | Visualize geographic inefficiency |
-| **Right Panel** | Trend Line - Avg delay cost over time | Show seasonal variation |
-| **Filters** | Airline, Airport, Month | Interactive exploration |
-| **Summary Cards** | KPIs | Top performer, avg cost, total impact |
+| Component | Description | Key Insights |
+|-----------|-------------|--------------|
+| **KPI Cards** | Best/worst carriers, average costs, total flights | Quick performance overview |
+| **AI Insights** | Gemini-powered analysis and recommendations | Data-driven insights and travel tips |
+| **Cost Efficiency Ranking** | Horizontal bar chart of cost per mile | Which airlines deliver best value |
+| **US Flight Network Map** | Geographic route visualization with 300+ routes | Network patterns and route efficiency |
+| **Airport Performance** | Delay costs by origin airport | Geographic delay hotspots |
+| **Efficiency Matrix** | Delay rate vs cost efficiency scatter plot | Performance quadrant analysis |
+| **Route Performance Matrix** | Distance vs frequency analysis | Route type efficiency patterns |
+| **Hub Connectivity Network** | Airport network size vs efficiency | Hub performance analysis |
+| **Day of Week Analysis** | Delay patterns by day | When to fly for best performance |
+| **Interactive Chatbot** | AI-powered Q&A about the data | Natural language data exploration |
+
+### Advanced Features
+- **Real-time Filtering**: Interactive airline selection with visual feedback
+- **Geographic Network Mapping**: Curved flight paths sized by delay cost and colored by severity
+- **Smart Route Selection**: Mixed strategy showing high-cost, high-volume, and diverse routes
+- **Comprehensive Airport Coverage**: 329+ airports with precise coordinates
+- **Responsive Design**: Mobile-friendly interface with premium styling
 
 ### Dashboard Layout
 
@@ -237,11 +259,14 @@ Built as an MVP for exploring airline operational efficiency through economic me
 ## Deliverables
 
 - [x] [analysis.ipynb](notebooks/analysis.ipynb) - Python notebook with full pipeline
-- [x] [airline_summary.csv](outputs/airline_summary.csv) - Airline metrics for Tableau
-- [x] [airport_summary.csv](outputs/airport_summary.csv) - Airport metrics for Tableau
+- [x] [dashboard_app_enhanced.py](dashboard_app_enhanced.py) - Interactive Dash dashboard
+- [x] [airline_summary.csv](outputs/airline_summary.csv) - Airline performance metrics
+- [x] [airport_summary.csv](outputs/airport_summary.csv) - Airport performance metrics
+- [x] [route_summary.csv](outputs/route_summary.csv) - Route-level analysis
+- [x] [full_dataset_for_tableau.csv](outputs/full_dataset_for_tableau.csv) - Complete dataset (5.4M flights)
+- [x] [airport_coords.csv](data/airport_coords.csv) - Geographic coordinates for 329+ airports
 - [x] [requirements.txt](requirements.txt) - Python dependencies
 - [x] [README.md](README.md) - Project documentation
-- [ ] `dashboard.twbx` - Tableau dashboard (create after running analysis)
 
 ## Questions?
 
@@ -252,6 +277,13 @@ For issues or questions about this analysis:
 
 ---
 
-**Project Status:** Ready for data input and analysis
+**Project Status:** ✅ Complete - Interactive dashboard with AI insights and geographic network visualization
 
 **Last Updated:** October 2024
+
+## Quick Start
+
+1. `pip install -r requirements.txt`
+2. `python dashboard_app_enhanced.py`
+3. Open `http://localhost:8050`
+4. Explore 5.4M flights across 329 airports with AI-powered insights!
