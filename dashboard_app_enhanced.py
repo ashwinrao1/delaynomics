@@ -250,119 +250,29 @@ app = dash.Dash(
 # HELPER FUNCTIONS
 # ============================================================================
 
-# Comprehensive fallback airport lat/lon mapping for US airports (IATA -> (lat, lon)).
-# This is used when the CSV file is not available or lacks coordinate columns.
+# Small fallback airport lat/lon mapping for common US airports (IATA -> (lat, lon)).
+# This is used when `airport_df` lacks coordinate columns.
 FALLBACK_AIRPORT_COORDS = {
-    'ABE': (40.6521, -75.4408), 'ABI': (32.4113, -99.6819), 'ABQ': (35.0402, -106.6091),
-    'ABR': (45.4491, -98.4218), 'ABY': (31.5355, -84.1947), 'ACK': (41.2530, -70.0602),
-    'ACT': (31.6113, -97.2305), 'ACV': (40.9781, -124.1086), 'ACY': (39.4576, -74.5772),
-    'AEX': (31.3274, -92.5486), 'AGS': (33.3699, -81.9645), 'ALB': (42.7483, -73.8017),
-    'ALO': (42.5571, -92.4003), 'ALW': (46.1768, -118.2887), 'AMA': (35.2194, -101.7059),
-    'ANC': (61.1743, -149.9962), 'APN': (45.0781, -83.5603), 'ASE': (39.2232, -106.8687),
-    'ATL': (33.6407, -84.4277), 'ATW': (44.2581, -88.5191), 'AUS': (30.1945, -97.6699),
-    'AVL': (35.4362, -82.5418), 'AVP': (41.3375, -75.7242), 'AZA': (33.3078, -111.6553),
-    'AZO': (42.2349, -85.5521), 'BDL': (41.9389, -72.6832), 'BFF': (41.8740, -103.5966),
-    'BFL': (35.4336, -119.0568), 'BGM': (42.2084, -75.9798), 'BGR': (44.8074, -68.8281),
-    'BHM': (33.5629, -86.7535), 'BIH': (37.9308, -91.7656), 'BIL': (45.8077, -108.5430),
-    'BIS': (46.7727, -100.7462), 'BJI': (64.8436, -147.6136), 'BLI': (48.7947, -122.5375),
-    'BLV': (38.5452, -89.8352), 'BMI': (40.4771, -88.9159), 'BNA': (36.1245, -86.6782),
-    'BOI': (43.5644, -116.2228), 'BOS': (42.3656, -71.0096), 'BPT': (29.9508, -94.0205),
-    'BQK': (25.2528, -80.1067), 'BQN': (18.4948, -67.1294), 'BRD': (45.2078, -69.7842),
-    'BRO': (25.9068, -97.4259), 'BTM': (45.9548, -112.4970), 'BTR': (30.5332, -91.1496),
-    'BTV': (44.4719, -73.1533), 'BUF': (42.9405, -78.7322), 'BUR': (34.2007, -118.3585),
-    'BWI': (39.1754, -76.6684), 'BZN': (45.7769, -111.1530), 'CAE': (33.9388, -81.1195),
-    'CAK': (40.9161, -81.4422), 'CDC': (37.7005, -113.0984), 'CHA': (35.0353, -85.2034),
-    'CHO': (38.1386, -78.4529), 'CHS': (32.8986, -80.0405), 'CID': (41.8847, -91.7108),
-    'CIU': (46.9108, -68.0178), 'CLD': (32.9005, -117.2800), 'CLE': (41.4117, -81.8498),
-    'CLL': (30.5886, -96.3631), 'CLT': (35.2144, -80.9473), 'CMH': (39.9980, -82.8919),
-    'CMI': (40.0392, -88.2781), 'CMX': (47.1684, -88.4891), 'COD': (44.5202, -109.0238),
-    'COS': (38.8058, -104.7006), 'COU': (38.8181, -92.2196), 'CPR': (42.9080, -106.4644),
-    'CRP': (27.7704, -97.5012), 'CRW': (38.3731, -81.5932), 'CSG': (32.5163, -84.9389),
-    'CVG': (39.0488, -84.6678), 'CWA': (44.7776, -89.6674), 'CYS': (41.1557, -104.8119),
-    'DAB': (29.1799, -81.0581), 'DAL': (32.8471, -96.8518), 'DAY': (39.9024, -84.2194),
-    'DCA': (38.8512, -77.0402), 'DDC': (37.7634, -99.9656), 'DEC': (39.8346, -88.8657),
-    'DEN': (39.8561, -104.6737), 'DFW': (32.8998, -97.0403), 'DHN': (31.3213, -85.4496),
-    'DIK': (46.7979, -102.8019), 'DLH': (46.8421, -92.1936), 'DRO': (37.1515, -107.7538),
-    'DSM': (41.5340, -93.6631), 'DTW': (42.2162, -83.3554), 'DVL': (46.8427, -96.8156),
-    'EAR': (40.7273, -99.0068), 'EAU': (44.8658, -91.4843), 'ECP': (30.3581, -85.7948),
-    'EGE': (39.6426, -106.9177), 'EKO': (38.8042, -79.8573), 'ELM': (42.1599, -76.8916),
-    'ELP': (31.8072, -106.3781), 'ESC': (45.7227, -87.0937), 'EUG': (44.1246, -123.2114),
-    'EVV': (38.0370, -87.5324), 'EWN': (35.0730, -77.0429), 'EWR': (40.6895, -74.1745),
-    'EYW': (24.5561, -81.7596), 'FAI': (64.8151, -147.8560), 'FAR': (46.9207, -96.8158),
-    'FAT': (36.7762, -119.7181), 'FAY': (34.9912, -78.8803), 'FCA': (48.3105, -114.2551),
-    'FLG': (35.1345, -111.6703), 'FLL': (26.0742, -80.1506), 'FMN': (36.7412, -108.2298),
-    'FNT': (42.9655, -83.7436), 'FOD': (42.5511, -94.1925), 'FSD': (43.5820, -96.7419),
-    'FSM': (35.3362, -94.3675), 'FWA': (40.9785, -85.1951), 'GCC': (43.8742, -103.0574),
-    'GCK': (37.9276, -100.7244), 'GEG': (47.6198, -117.5336), 'GFK': (47.9493, -97.1761),
-    'GGG': (32.3840, -94.7116), 'GJT': (39.1224, -108.5267), 'GNV': (29.6900, -82.2718),
-    'GPT': (30.4073, -89.0701), 'GRB': (44.4851, -88.1296), 'GRI': (40.9675, -98.3096),
-    'GRK': (31.0672, -97.8289), 'GRR': (42.8808, -85.5228), 'GSO': (36.0978, -79.9373),
-    'GSP': (34.8957, -82.2189), 'GTF': (47.4820, -111.3705), 'GTR': (33.4503, -88.5914),
-    'GUC': (38.5339, -106.9331), 'GUF': (39.3704, -81.4395), 'GUM': (13.4834, 144.7960),
-    'HDN': (40.4811, -107.2176), 'HHH': (35.2584, -80.9536), 'HIB': (47.3866, -92.8389),
-    'HLN': (46.6068, -111.9825), 'HNL': (21.3099, -157.8581), 'HOB': (32.6875, -103.2173),
-    'HOU': (29.6454, -95.2789), 'HPN': (41.0670, -73.7076), 'HRL': (26.2285, -97.6544),
-    'HSV': (34.6371, -86.7750), 'HTS': (38.3667, -82.5581), 'HYA': (41.6693, -70.2803),
-    'HYS': (38.8422, -99.2732), 'IAD': (38.9531, -77.4565), 'IAH': (29.9902, -95.3368),
-    'ICT': (37.6499, -97.4331), 'IDA': (43.5146, -112.0707), 'ILM': (34.2706, -77.9026),
-    'IMT': (45.8181, -88.1145), 'IND': (39.7173, -86.2944), 'INL': (48.5664, -93.4031),
-    'ISP': (40.7952, -73.1002), 'ITH': (42.4831, -76.4584), 'ITO': (19.7188, -155.0478),
-    'JAC': (43.6073, -110.7377), 'JAN': (32.3112, -90.0759), 'JAX': (30.4941, -81.6878),
-    'JFK': (40.6413, -73.7781), 'JLN': (38.7424, -94.8907), 'JMS': (46.9297, -98.6782),
-    'JNU': (58.3548, -134.5763), 'JST': (40.3161, -78.8339), 'KOA': (19.7388, -156.0456),
-    'KTN': (55.3556, -131.7136), 'LAN': (42.7787, -84.5874), 'LAR': (41.3121, -105.6750),
-    'LAS': (36.0840, -115.1537), 'LAW': (34.5677, -98.4166), 'LAX': (33.9416, -118.4085),
-    'LBB': (33.6636, -101.8228), 'LBE': (40.2759, -79.4048), 'LBF': (41.1313, -100.6846),
-    'LBL': (37.0441, -89.8786), 'LCH': (30.1261, -93.2234), 'LCK': (39.8138, -82.9278),
-    'LEX': (38.0365, -84.6059), 'LFT': (30.2053, -91.9876), 'LGA': (40.7769, -73.8740),
-    'LGB': (33.8177, -118.1516), 'LIH': (21.9760, -159.3390), 'LIT': (34.7294, -92.2243),
-    'LNK': (40.8510, -96.7581), 'LRD': (27.5438, -99.4616), 'LSE': (43.8759, -91.2563),
-    'LWS': (46.3745, -117.0154), 'MAF': (31.9425, -102.2019), 'MBS': (43.5329, -84.0796),
-    'MCI': (39.2976, -94.7139), 'MCO': (28.4312, -81.3081), 'MCW': (41.4307, -100.5917),
-    'MDT': (40.1935, -76.7634), 'MDW': (41.7868, -87.7522), 'MEI': (32.3326, -88.7519),
-    'MEM': (35.0424, -89.9767), 'MFE': (26.1758, -98.2386), 'MFR': (42.3742, -122.8738),
-    'MGM': (32.3006, -86.3940), 'MGW': (39.6429, -79.9163), 'MHK': (39.1409, -96.6708),
-    'MHT': (42.9326, -71.4357), 'MIA': (25.7959, -80.2870), 'MKE': (42.9472, -87.8966),
-    'MLB': (28.1028, -80.6453), 'MLI': (41.4486, -90.5075), 'MLU': (32.5109, -92.0377),
-    'MOB': (30.6912, -88.2431), 'MOT': (48.2593, -101.2803), 'MQT': (46.3536, -87.3951),
-    'MRY': (36.5870, -121.8429), 'MSN': (43.1399, -89.3375), 'MSO': (46.9163, -114.0909),
-    'MSP': (44.8848, -93.2223), 'MSY': (29.9934, -90.2581), 'MTJ': (37.2276, -108.5259),
-    'MVY': (41.3931, -70.6143), 'MYR': (33.6797, -78.9283), 'OAJ': (36.9681, -76.2012),
-    'OAK': (37.7214, -122.2208), 'OGG': (20.8986, -156.4307), 'OKC': (35.3931, -97.6007),
-    'OMA': (41.3032, -95.8941), 'ONT': (34.0560, -117.6012), 'ORD': (41.9742, -87.9073),
-    'ORF': (36.8946, -76.2012), 'ORH': (42.2673, -71.8757), 'OTH': (43.4172, -124.2461),
-    'PAE': (47.9063, -122.2815), 'PBG': (44.6510, -73.4681), 'PBI': (26.6832, -80.0956),
-    'PDX': (45.5898, -122.5951), 'PGD': (26.9202, -81.9905), 'PHL': (39.8744, -75.2424),
-    'PHX': (33.4342, -112.0116), 'PIA': (40.6642, -89.6933), 'PIB': (39.2681, -79.9331),
-    'PIE': (27.9103, -82.6874), 'PIH': (42.9098, -112.5958), 'PIT': (40.4915, -80.2329),
-    'PLN': (44.6850, -85.5783), 'PNS': (30.4734, -87.1866), 'PPG': (-14.3310, -170.7105),
-    'PQI': (46.6890, -68.0448), 'PRC': (34.6544, -112.4196), 'PSC': (46.2647, -119.1191),
-    'PSE': (18.0083, -66.5635), 'PSP': (33.8297, -116.5066), 'PVD': (41.7240, -71.4281),
-    'PVU': (40.2192, -111.7235), 'PWM': (43.6462, -70.3093), 'RAP': (44.0453, -103.0574),
-    'RDD': (40.5089, -122.2934), 'RDM': (44.2541, -121.1500), 'RDU': (35.8776, -78.7875),
-    'RFD': (42.1954, -89.0972), 'RHI': (45.6312, -89.4675), 'RIC': (37.5052, -77.3197),
-    'RIW': (43.0642, -108.4597), 'RKS': (41.5942, -109.0651), 'RNO': (39.4991, -119.7681),
-    'ROA': (37.3255, -79.9754), 'ROC': (43.1189, -77.6724), 'ROW': (33.3017, -104.5307),
-    'RST': (43.9083, -92.4902), 'RSW': (26.5362, -81.7552), 'SAF': (35.6178, -106.0887),
-    'SAN': (32.7338, -117.1933), 'SAT': (29.5337, -98.4698), 'SAV': (32.1276, -81.2021),
-    'SBA': (34.4259, -119.8403), 'SBN': (41.7093, -86.3186), 'SBP': (35.2368, -120.6424),
-    'SCE': (40.8496, -78.2897), 'SCK': (37.8942, -121.2381), 'SDF': (38.1740, -85.7364),
-    'SEA': (47.4502, -122.3088), 'SFB': (28.7776, -81.2375), 'SFO': (37.6213, -122.3790),
-    'SGF': (37.2457, -93.3886), 'SGU': (37.0361, -113.5103), 'SHR': (44.7692, -106.9803),
-    'SHV': (32.4466, -93.8256), 'SIT': (57.0471, -135.3616), 'SJC': (37.3639, -121.9289),
-    'SJT': (31.3577, -100.4963), 'SJU': (18.4394, -66.0018), 'SLC': (40.7884, -111.9778),
-    'SLN': (38.8403, -97.6519), 'SMF': (38.6954, -121.5908), 'SMX': (34.8989, -120.4576),
-    'SNA': (33.6757, -117.8681), 'SPI': (39.8441, -89.6779), 'SPS': (33.9888, -98.4919),
-    'SRQ': (27.3954, -82.5544), 'STL': (38.7487, -90.3700), 'STS': (38.5089, -122.8131),
-    'STT': (18.3373, -64.9733), 'STX': (17.7019, -64.7986), 'SUN': (43.5041, -114.2958),
-    'SUX': (42.4026, -96.3844), 'SWF': (41.5041, -74.1048), 'SWO': (37.3684, -92.2226),
-    'SYR': (43.1112, -76.1063), 'TLH': (30.3965, -84.3503), 'TPA': (27.9755, -82.5332),
-    'TRI': (36.4752, -82.4074), 'TTN': (40.2766, -74.8148), 'TUL': (36.1984, -95.8881),
-    'TUS': (32.1161, -110.9410), 'TVC': (44.7414, -85.5822), 'TWF': (42.4818, -114.4877),
-    'TXK': (33.4537, -93.9910), 'TYR': (32.3540, -95.4024), 'TYS': (35.8111, -83.9937),
-    'USA': (31.1447, -87.4214), 'VCT': (28.8526, -96.9185), 'VLD': (30.7825, -83.2767),
-    'VPS': (30.4832, -86.5254), 'WYS': (37.2018, -109.7549), 'XNA': (36.2819, -94.3069),
-    'XWA': (47.2304, -120.2067), 'YUM': (32.6566, -114.6060)
+    'ATL': (33.6407, -84.4277),
+    'LAX': (33.9416, -118.4085),
+    'ORD': (41.9742, -87.9073),
+    'DFW': (32.8998, -97.0403),
+    'DEN': (39.8561, -104.6737),
+    'JFK': (40.6413, -73.7781),
+    'SFO': (37.6213, -122.3790),
+    'SEA': (47.4502, -122.3088),
+    'LAS': (36.0840, -115.1537),
+    'MCO': (28.4312, -81.3081),
+    'CLT': (35.2144, -80.9473),
+    'PHX': (33.4342, -112.0116),
+    'IAH': (29.9902, -95.3368),
+    'MIA': (25.7959, -80.2870),
+    'BOS': (42.3656, -71.0096),
+    'MSP': (44.8848, -93.2223),
+    'DTW': (42.2162, -83.3554),
+    'PHL': (39.8744, -75.2424),
+    'BWI': (39.1754, -76.6684),
+    'SLC': (40.7884, -111.9778)
 }
 
 def create_kpi_card(icon, title, value, subtitle, trend=None, color='accent'):
@@ -553,14 +463,40 @@ app.layout = html.Div([
             ),
         ], className="chart-card-premium-large"),
 
-        # === NEW: Route Analysis Container (only added container, no callbacks changed) ===
+        # === Route Performance Matrix ===
         html.Div([
             html.Div([
-                html.H3("Route Cost Impact", className="chart-title-premium"),
-                html.P("Top 10 most costly routes by total delay impact", className="chart-subtitle-premium"),
+                html.H3("Route Performance Matrix", className="chart-title-premium"),
+                html.P("Route efficiency by distance category and flight frequency", className="chart-subtitle-premium"),
             ], className="chart-header-premium"),
             dcc.Graph(
-                id='route-analysis-chart',
+                id='route-performance-matrix',
+                config={'displayModeBar': False, 'responsive': True},
+                style={'height': '100%', 'width': '100%'}
+            ),
+        ], className="chart-card-premium-large"),
+
+        # === Hub Connectivity Network ===
+        html.Div([
+            html.Div([
+                html.H3("Hub Connectivity Network", className="chart-title-premium"),
+                html.P("Airport network size vs operational efficiency", className="chart-subtitle-premium"),
+            ], className="chart-header-premium"),
+            dcc.Graph(
+                id='hub-connectivity-chart',
+                config={'displayModeBar': False, 'responsive': True},
+                style={'height': '100%', 'width': '100%'}
+            ),
+        ], className="chart-card-premium-large"),
+
+        # === Seasonal Delay Patterns ===
+        html.Div([
+            html.Div([
+                html.H3("Seasonal Delay Patterns", className="chart-title-premium"),
+                html.P("Route delay trends across months of the year", className="chart-subtitle-premium"),
+            ], className="chart-header-premium"),
+            dcc.Graph(
+                id='seasonal-patterns-chart',
                 config={'displayModeBar': False, 'responsive': True},
                 style={'height': '100%', 'width': '100%'}
             ),
@@ -1134,9 +1070,6 @@ def update_network_performance(top_n, carrier_filter, selected_carriers_json):
         route_df = pd.read_csv(route_path)
         if route_df.empty:
             return _empty_figure("Route summary CSV is empty")
-        
-        # Filter out very small routes to reduce clutter (minimum 25 flights)
-        route_df = route_df[route_df['num_flights'] >= 25].copy()
 
         # Apply carrier filters
         try:
@@ -1148,30 +1081,10 @@ def update_network_performance(top_n, carrier_filter, selected_carriers_json):
         if carriers_to_filter and 'primary_carrier' in route_df.columns:
             route_df = route_df[route_df['primary_carrier'].isin(carriers_to_filter)]
 
-        # Get routes with smart selection for geographic diversity
+        # Get top N routes by total delay cost
         value_col = 'total_delay_cost' if 'total_delay_cost' in route_df.columns else 'avg_delay_cost'
-        top_n = int(top_n) if top_n is not None else 200
-        
-        # Strategy: Mix of high-impact routes, high-volume routes, and geographic diversity
-        # 1. Top routes by delay cost (40%)
-        # 2. Top routes by flight volume (40%) 
-        # 3. Random sample for geographic diversity (20%)
-        
-        cost_routes = route_df.nlargest(int(top_n * 0.4), value_col)
-        volume_routes = route_df.nlargest(int(top_n * 0.4), 'num_flights')
-        
-        # Get remaining routes for diversity sampling
-        used_routes = pd.concat([cost_routes, volume_routes])['route'].unique()
-        remaining_routes = route_df[~route_df['route'].isin(used_routes)]
-        diversity_routes = remaining_routes.sample(min(int(top_n * 0.2), len(remaining_routes)), random_state=42) if len(remaining_routes) > 0 else pd.DataFrame()
-        
-        # Combine all selections
-        all_selections = [cost_routes, volume_routes]
-        if not diversity_routes.empty:
-            all_selections.append(diversity_routes)
-            
-        combined_routes = pd.concat(all_selections).drop_duplicates(subset=['route'])
-        top_routes = combined_routes.head(top_n).copy()
+        top_n = int(top_n) if top_n is not None else 20
+        top_routes = route_df.nlargest(top_n, value_col).copy()
 
         # Load airport coordinates
         coords_df = None
@@ -1215,11 +1128,6 @@ def update_network_performance(top_n, carrier_filter, selected_carriers_json):
             origin_lat, origin_lon = get_coordinates(row['origin'])
             dest_lat, dest_lon = get_coordinates(row['dest'])
             
-            # Validate delay cost data
-            delay_cost = row[value_col]
-            if pd.isna(delay_cost) or delay_cost < 0:
-                delay_cost = 0
-            
             if all(coord is not None for coord in [origin_lat, origin_lon, dest_lat, dest_lon]):
                 coords_data.append({
                     'route': row['route'],
@@ -1229,10 +1137,10 @@ def update_network_performance(top_n, carrier_filter, selected_carriers_json):
                     'origin_lon': origin_lon,
                     'dest_lat': dest_lat,
                     'dest_lon': dest_lon,
-                    'delay_cost': delay_cost,
-                    'num_flights': max(0, row.get('num_flights', 0)),
-                    'avg_delay_min': row.get('avg_delay_min', 0) if pd.notna(row.get('avg_delay_min', 0)) else 0,
-                    'delay_rate': row.get('delay_rate', 0) if pd.notna(row.get('delay_rate', 0)) else 0,
+                    'delay_cost': row[value_col],
+                    'num_flights': row.get('num_flights', 0),
+                    'avg_delay_min': row.get('avg_delay_min', 0),
+                    'delay_rate': row.get('delay_rate', 0),
                     'carrier': row.get('primary_carrier', 'Unknown')
                 })
 
@@ -1241,46 +1149,19 @@ def update_network_performance(top_n, carrier_filter, selected_carriers_json):
 
         coords_df_final = pd.DataFrame(coords_data)
         
-        # Debug: Check for any NaN values in the final dataset
-        nan_delay_costs = coords_df_final['delay_cost'].isna().sum()
-        if nan_delay_costs > 0:
-            print(f"Warning: {nan_delay_costs} routes have NaN delay costs")
-            # Fill NaN values with 0
-            coords_df_final['delay_cost'] = coords_df_final['delay_cost'].fillna(0)
-        
         # Create the map figure
         fig = go.Figure()
 
-        # Normalize values for visual scaling with NaN protection
+        # Normalize values for visual scaling
         max_cost = coords_df_final['delay_cost'].max()
         min_cost = coords_df_final['delay_cost'].min()
         max_flights = coords_df_final['num_flights'].max() if coords_df_final['num_flights'].max() > 0 else 1
 
-        # Ensure we have valid min/max values
-        if pd.isna(max_cost) or pd.isna(min_cost):
-            max_cost = 1
-            min_cost = 0
-
         # Add flight routes as lines
         for _, route in coords_df_final.iterrows():
-            # Calculate line properties with NaN protection
-            delay_cost = route['delay_cost']
-            if pd.isna(delay_cost):
-                delay_cost = 0
-                
-            cost_ratio = (delay_cost - min_cost) / (max_cost - min_cost) if max_cost > min_cost else 0
-            
-            # Ensure cost_ratio is valid
-            if pd.isna(cost_ratio) or cost_ratio < 0:
-                cost_ratio = 0
-            elif cost_ratio > 1:
-                cost_ratio = 1
-                
+            # Calculate line properties
+            cost_ratio = (route['delay_cost'] - min_cost) / (max_cost - min_cost) if max_cost > min_cost else 0
             line_width = 2 + (cost_ratio * 8)  # 2-10px width range
-            
-            # Final safety check for line_width
-            if pd.isna(line_width) or line_width < 1:
-                line_width = 2
             
             # Color based on delay severity
             if cost_ratio < 0.33:
@@ -1315,7 +1196,7 @@ def update_network_performance(top_n, carrier_filter, selected_carriers_json):
                 hovertext=f"""<b>{route['route']}</b><br>
                 Carrier: {route['carrier']}<br>
                 Total Delay Cost: ${route['delay_cost']:,.0f}<br>
-                Flights: {int(route['num_flights']):,}<br>
+                Flights: {route['num_flights']:,}<br>
                 Avg Delay: {route['avg_delay_min']:.1f} min<br>
                 Delay Rate: {route['delay_rate']*100:.1f}%""",
                 showlegend=False,
@@ -1360,34 +1241,14 @@ def update_network_performance(top_n, carrier_filter, selected_carriers_json):
         airport_hovers = []
 
         max_airport_cost = max(data['total_cost'] for data in airports.values()) if airports else 1
-        
-        # Ensure max_airport_cost is valid
-        if pd.isna(max_airport_cost) or max_airport_cost <= 0:
-            max_airport_cost = 1
 
         for code, data in airports.items():
             airport_lons.append(data['lon'])
             airport_lats.append(data['lat'])
             
-            # Size based on total cost impact with validation
-            total_cost = data['total_cost']
-            if pd.isna(total_cost) or total_cost < 0:
-                total_cost = 0
-                
-            size_ratio = total_cost / max_airport_cost if max_airport_cost > 0 else 0
-            
-            # Ensure size_ratio is valid
-            if pd.isna(size_ratio) or size_ratio < 0:
-                size_ratio = 0
-            elif size_ratio > 1:
-                size_ratio = 1
-                
+            # Size based on total cost impact
+            size_ratio = data['total_cost'] / max_airport_cost if max_airport_cost > 0 else 0
             size = 8 + (size_ratio * 20)  # 8-28px range
-            
-            # Final validation for size
-            if pd.isna(size) or size < 8:
-                size = 8
-                
             airport_sizes.append(size)
             
             # Color based on hub size (number of routes)
@@ -1464,25 +1325,281 @@ def update_network_performance(top_n, carrier_filter, selected_carriers_json):
 
 
 @callback(
-    Output('route-analysis-chart', 'figure'),
+    Output('route-performance-matrix', 'figure'),
     [Input('selected-carriers-store', 'children'),
      Input('route-carrier-filter', 'value')]
 )
-def update_route_analysis(selected_carriers_json, carrier_filter):
-    """Render a Calendar-style heatmap of daily total delay cost using full_dataset_for_tableau.csv"""
+def update_route_performance_matrix(selected_carriers_json, carrier_filter):
+    """Route Performance Matrix"""
+    return create_route_performance_matrix(selected_carriers_json, carrier_filter)
+
+@callback(
+    Output('hub-connectivity-chart', 'figure'),
+    [Input('selected-carriers-store', 'children'),
+     Input('route-carrier-filter', 'value')]
+)
+def update_hub_connectivity(selected_carriers_json, carrier_filter):
+    """Hub Connectivity Network"""
+    return create_hub_connectivity_network(selected_carriers_json, carrier_filter)
+
+@callback(
+    Output('seasonal-patterns-chart', 'figure'),
+    [Input('selected-carriers-store', 'children'),
+     Input('route-carrier-filter', 'value')]
+)
+def update_seasonal_patterns(selected_carriers_json, carrier_filter):
+    """Seasonal Delay Patterns"""
+    return create_seasonal_analysis(selected_carriers_json, carrier_filter)
+
+def create_route_performance_matrix(selected_carriers_json, carrier_filter):
+    """Create a route performance matrix showing distance vs frequency vs delay cost"""
+    route_path = Path('outputs/route_summary.csv')
+    if not route_path.exists():
+        return _empty_figure("Route summary CSV not found")
+    
+    try:
+        route_df = pd.read_csv(route_path)
+        
+        # Apply carrier filters
+        try:
+            selected = json.loads(selected_carriers_json) if selected_carriers_json else None
+        except Exception:
+            selected = None
+
+        carriers_to_filter = carrier_filter if carrier_filter else selected
+        if carriers_to_filter and 'primary_carrier' in route_df.columns:
+            route_df = route_df[route_df['primary_carrier'].isin(carriers_to_filter)]
+        
+        # Calculate metrics
+        route_df['flights_per_day'] = route_df['num_flights'] / 365  # Approximate daily flights
+        route_df['cost_per_mile'] = route_df['total_delay_cost'] / route_df['distance']
+        route_df['cost_per_flight'] = route_df['total_delay_cost'] / route_df['num_flights']
+        
+        # Categorize routes by distance
+        route_df['distance_category'] = pd.cut(route_df['distance'], 
+                                             bins=[0, 500, 1500, 5000], 
+                                             labels=['Short (<500mi)', 'Medium (500-1500mi)', 'Long (>1500mi)'])
+        
+        # Create scatter plot
+        fig = go.Figure()
+        
+        colors = {'Short (<500mi)': COLORS['success'], 
+                 'Medium (500-1500mi)': COLORS['warning'], 
+                 'Long (>1500mi)': COLORS['danger']}
+        
+        for category in route_df['distance_category'].unique():
+            if pd.notna(category):
+                cat_data = route_df[route_df['distance_category'] == category]
+                
+                fig.add_trace(go.Scatter(
+                    x=cat_data['flights_per_day'],
+                    y=cat_data['cost_per_flight'],
+                    mode='markers',
+                    marker=dict(
+                        size=cat_data['distance'] / 50,  # Size by distance
+                        color=colors.get(category, COLORS['primary']),
+                        opacity=0.7,
+                        line=dict(width=1, color='white')
+                    ),
+                    name=category,
+                    text=cat_data['route'],
+                    hovertemplate='<b>%{text}</b><br>' +
+                                'Flights/day: %{x:.1f}<br>' +
+                                'Cost/flight: $%{y:.0f}<br>' +
+                                'Distance: %{marker.size:.0f} mi<extra></extra>'
+                ))
+        
+        fig.update_layout(
+            title='Route Performance Matrix: Frequency vs Cost Efficiency',
+            xaxis_title='Average Flights per Day',
+            yaxis_title='Delay Cost per Flight ($)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font=dict(family='Inter, sans-serif', color=COLORS['text_secondary']),
+            legend=dict(title='Route Distance'),
+            hovermode='closest'
+        )
+        
+        return fig
+        
+    except Exception as e:
+        return _empty_figure(f"Error creating performance matrix: {str(e)}")
+
+def create_hub_connectivity_network(selected_carriers_json, carrier_filter):
+    """Create a network diagram showing hub connectivity and efficiency"""
+    route_path = Path('outputs/route_summary.csv')
+    if not route_path.exists():
+        return _empty_figure("Route summary CSV not found")
+    
+    try:
+        route_df = pd.read_csv(route_path)
+        
+        # Apply carrier filters
+        try:
+            selected = json.loads(selected_carriers_json) if selected_carriers_json else None
+        except Exception:
+            selected = None
+
+        carriers_to_filter = carrier_filter if carrier_filter else selected
+        if carriers_to_filter and 'primary_carrier' in route_df.columns:
+            route_df = route_df[route_df['primary_carrier'].isin(carriers_to_filter)]
+        
+        # Parse routes to get airports
+        airports = {}
+        for _, row in route_df.iterrows():
+            parts = row['route'].split('-')
+            if len(parts) >= 2:
+                origin, dest = parts[0], parts[1]
+                
+                # Track airport metrics
+                for airport in [origin, dest]:
+                    if airport not in airports:
+                        airports[airport] = {
+                            'routes': 0,
+                            'total_flights': 0,
+                            'total_delay_cost': 0,
+                            'connections': set()
+                        }
+                    
+                    airports[airport]['routes'] += 1
+                    airports[airport]['total_flights'] += row['num_flights']
+                    airports[airport]['total_delay_cost'] += row['total_delay_cost']
+                    
+                    # Track connections
+                    other_airport = dest if airport == origin else origin
+                    airports[airport]['connections'].add(other_airport)
+        
+        # Convert to DataFrame for easier plotting
+        airport_data = []
+        for code, data in airports.items():
+            airport_data.append({
+                'airport': code,
+                'routes': data['routes'],
+                'total_flights': data['total_flights'],
+                'total_delay_cost': data['total_delay_cost'],
+                'connections': len(data['connections']),
+                'avg_cost_per_flight': data['total_delay_cost'] / data['total_flights'] if data['total_flights'] > 0 else 0
+            })
+        
+        airport_df = pd.DataFrame(airport_data)
+        
+        # Create bubble chart with simplified color approach
+        fig = go.Figure()
+        
+        # Clean and validate data
+        airport_df['avg_cost_per_flight'] = airport_df['avg_cost_per_flight'].fillna(0)
+        airport_df['total_flights'] = airport_df['total_flights'].fillna(0)
+        
+        # Create discrete color categories instead of continuous scale
+        # Categorize airports by efficiency
+        cost_values = airport_df['avg_cost_per_flight']
+        cost_percentiles = cost_values.quantile([0.33, 0.67])
+        
+        def get_efficiency_category(cost):
+            if cost <= cost_percentiles.iloc[0]:
+                return 'High Efficiency'
+            elif cost <= cost_percentiles.iloc[1]:
+                return 'Medium Efficiency'
+            else:
+                return 'Low Efficiency'
+        
+        airport_df['efficiency_category'] = airport_df['avg_cost_per_flight'].apply(get_efficiency_category)
+        
+        # Color mapping
+        color_map = {
+            'High Efficiency': COLORS['success'],
+            'Medium Efficiency': COLORS['warning'], 
+            'Low Efficiency': COLORS['danger']
+        }
+        
+        # Create size array with validation
+        flight_sizes = (airport_df['total_flights'] / 1000).clip(lower=1, upper=50)
+        
+        # Add traces by category for better legend
+        for category in ['High Efficiency', 'Medium Efficiency', 'Low Efficiency']:
+            cat_data = airport_df[airport_df['efficiency_category'] == category]
+            if not cat_data.empty:
+                # Calculate sizes properly to avoid the color error
+                sizes = (cat_data['total_flights'] / 1000).clip(lower=1, upper=40).tolist()
+                
+                fig.add_trace(go.Scatter(
+                    x=cat_data['connections'],
+                    y=cat_data['routes'],
+                    mode='markers+text',
+                    marker=dict(
+                        size=sizes,
+                        color=color_map[category],
+                        line=dict(width=1, color='white'),
+                        sizemin=8,
+                        sizemode='diameter',
+                        opacity=0.8
+                    ),
+                    text=cat_data['airport'],
+                    textposition='middle center',
+                    textfont=dict(size=9, color='white', family='Inter, sans-serif'),
+                    name=category,
+                    hovertemplate='<b>%{text}</b><br>' +
+                                'Connections: %{x}<br>' +
+                                'Routes: %{y}<br>' +
+                                'Total Flights: %{customdata[0]:,.0f}<br>' +
+                                'Avg Cost/Flight: $%{customdata[1]:.0f}<br>' +
+                                'Efficiency: %{customdata[2]}<extra></extra>',
+                    customdata=list(zip(cat_data['total_flights'].tolist(), 
+                                       cat_data['avg_cost_per_flight'].tolist(),
+                                       cat_data['efficiency_category'].tolist()))
+                ))
+        
+        fig.update_layout(
+            title='Hub Connectivity Analysis: Network Size vs Efficiency',
+            xaxis_title='Number of Connected Airports',
+            yaxis_title='Number of Routes',
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font=dict(family='Inter, sans-serif', color=COLORS['text_secondary']),
+            hovermode='closest'
+        )
+        
+        return fig
+        
+    except Exception as e:
+        return _empty_figure(f"Error creating hub network: {str(e)}")
+
+def create_seasonal_analysis(selected_carriers_json, carrier_filter):
+    """Create seasonal delay pattern analysis"""
     full_path = Path('outputs/full_dataset_for_tableau.csv')
     if not full_path.exists():
-        return _empty_figure("Full dataset CSV not found (outputs/full_dataset_for_tableau.csv)")
-
+        return _empty_figure("Full dataset CSV not found")
+    
     try:
-        usecols = ['Year', 'Month', 'DayofMonth', 'delay_cost', 'Carrier']
-        # Read minimal columns for aggregation to keep memory usage low
-        df = pd.read_csv(full_path, usecols=[c for c in usecols if c in pd.read_csv(full_path, nrows=0).columns])
-
-        if df.empty:
-            return _empty_figure("Full dataset CSV is empty")
-
-        # Optional filter by carrier
+        # Better sampling strategy to ensure all 12 months are represented
+        # Read smaller chunks more frequently to get better month distribution
+        chunk_size = 300000
+        max_chunks = 20  # Read more chunks to ensure we get all months
+        
+        chunks = []
+        months_found = set()
+        chunk_count = 0
+        
+        for chunk in pd.read_csv(full_path, chunksize=chunk_size):
+            chunk_count += 1
+            chunk_months = set(chunk['Month'].unique())
+            months_found.update(chunk_months)
+            
+            # Sample from each chunk
+            chunk_sample = chunk.sample(n=min(25000, len(chunk)), random_state=42)
+            chunks.append(chunk_sample)
+            
+            # Continue until we have all 12 months or hit max chunks
+            if len(months_found) == 12 or chunk_count >= max_chunks:
+                break
+        
+        df = pd.concat(chunks, ignore_index=True)
+        
+        # Log what months we found for debugging
+        final_months = sorted(df['Month'].unique())
+        print(f"Seasonal analysis found months: {final_months}")
+        
+        # Apply carrier filters
         try:
             selected = json.loads(selected_carriers_json) if selected_carriers_json else None
         except Exception:
@@ -1491,65 +1608,74 @@ def update_route_analysis(selected_carriers_json, carrier_filter):
         carriers_to_filter = carrier_filter if carrier_filter else selected
         if carriers_to_filter and 'Carrier' in df.columns:
             df = df[df['Carrier'].isin(carriers_to_filter)]
-
-        # Build date and aggregate by day
-        df['date'] = pd.to_datetime(df[['Year', 'Month', 'DayofMonth']].rename(columns={'DayofMonth': 'day'}))
-        daily = df.groupby('date', as_index=False)['delay_cost'].sum()
-
-        if daily.empty:
-            return _empty_figure('No daily delay cost data after filtering')
-
-        # Build a month-grid calendar for the most recent year in the data
-        daily['year'] = daily['date'].dt.year
-        selected_year = int(daily['year'].max())
-        year_df = daily[daily['year'] == selected_year].copy()
-
-        # Helper: create matrix for a month (rows=week_of_month, cols=weekday Mon..Sun)
-        def month_matrix(df_month):
-            # Create a date range covering the full month
-            month = df_month['date'].dt.month.iloc[0]
-            year = df_month['date'].dt.year.iloc[0]
-            first = pd.Timestamp(year=year, month=month, day=1)
-            last = (first + pd.offsets.MonthEnd(0)).date()
-            all_days = pd.date_range(start=first, end=last)
-            mat = []
-            week = []
-            # Pad start with Nones until Monday (0)
-            first_weekday = first.weekday()
-            week = [None] * first_weekday
-            for d in all_days:
-                val = df_month.loc[df_month['date'] == d, 'delay_cost']
-                v = float(val.values[0]) if not val.empty else 0.0
-                week.append(v)
-                if len(week) == 7:
-                    mat.append(week)
-                    week = []
-            if week:
-                # pad end
-                week += [None] * (7 - len(week))
-                mat.append(week)
-            return mat
-
-        # Prepare subplots 3x4 for months Jan..Dec
-        fig = make_subplots(rows=3, cols=4, subplot_titles=[pd.Timestamp(selected_year, m, 1).strftime('%B') for m in range(1,13)])
-        for m in range(1,13):
-            mdf = year_df[year_df['date'].dt.month == m]
-            mat = month_matrix(mdf) if not mdf.empty else [[0]*7]
-            z = mat
-            # row/col in subplot grid
-            row = (m-1)//4 + 1
-            col = (m-1)%4 + 1
-            # create heatmap for this month; flip y so week1 at top
-            hm = go.Heatmap(z=z, x=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], y=[f'W{i+1}' for i in range(len(z))], colorscale='YlOrRd', showscale=False,
-                             hovertemplate='%{x} %{y}<br>Delay Cost: $%{z:.0f}<extra></extra>')
-            fig.add_trace(hm, row=row, col=col)
-            fig.update_yaxes(autorange='reversed', row=row, col=col)
-
-        fig.update_layout(title=f'Daily Delay Cost Calendar: {selected_year}', height=900, showlegend=False, margin=dict(t=80))
+        
+        # Create route column and date
+        if 'route' not in df.columns:
+            df['route'] = df['Origin'] + '-' + df['Dest']
+        
+        # Use existing month column if available, otherwise create from date
+        if 'Month' in df.columns:
+            df['month'] = df['Month']
+        else:
+            df['date'] = pd.to_datetime(df[['Year', 'Month', 'DayofMonth']].rename(columns={'DayofMonth': 'day'}))
+            df['month'] = df['date'].dt.month
+        
+        # Get top routes by volume
+        top_routes = df['route'].value_counts().head(15).index
+        df_filtered = df[df['route'].isin(top_routes)]
+        
+        if df_filtered.empty:
+            return _empty_figure("No route data available after filtering")
+        
+        # Aggregate by route and month
+        monthly_delays = df_filtered.groupby(['route', 'month'])['delay_cost'].mean().reset_index()
+        
+        if monthly_delays.empty:
+            return _empty_figure("No monthly delay data available")
+        
+        # Pivot for heatmap
+        heatmap_data = monthly_delays.pivot(index='route', columns='month', values='delay_cost')
+        
+        # Fill missing months with 0 and ensure we have proper month labels
+        month_names = {1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun',
+                      7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec'}
+        
+        # Reindex to include all months that exist in the dataset (fill missing with NaN)
+        available_months = sorted(df['month'].unique())
+        all_months = list(range(1, 13))  # Still show all 12 months for context
+        heatmap_data = heatmap_data.reindex(columns=all_months)
+        
+        # Create month labels
+        month_labels = [month_names.get(i, f'Month {i}') for i in heatmap_data.columns]
+        
+        fig = go.Figure(data=go.Heatmap(
+            z=heatmap_data.values,
+            x=month_labels,
+            y=heatmap_data.index,
+            colorscale='RdYlGn_r',
+            showscale=True,
+            colorbar=dict(title='Avg Delay<br>Cost ($)'),
+            hovertemplate='Route: %{y}<br>Month: %{x}<br>Avg Delay Cost: $%{z:.0f}<extra></extra>',
+            zmin=0  # Set minimum to 0 for better color scaling
+        ))
+        
+        fig.update_layout(
+            title='Seasonal Delay Patterns by Route',
+            xaxis_title='Month',
+            yaxis_title='Route',
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font=dict(family='Inter, sans-serif', color=COLORS['text_secondary'])
+        )
+        
         return fig
-
+        
     except Exception as e:
-        return _empty_figure(f"Error loading full dataset: {str(e)}")
+        return _empty_figure(f"Error creating seasonal analysis: {str(e)}")
+
+
+
+
 
 
 # ============================================================================
